@@ -15,7 +15,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LoopLearn.API")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2ad1cfe3a5e5f8f5f0708f54775dafd065215962")]
 [assembly: System.Reflection.AssemblyProductAttribute("LoopLearn.API")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LoopLearn.API")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

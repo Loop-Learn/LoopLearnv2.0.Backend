@@ -161,3 +161,4 @@ F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.API\obj\De
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.API\obj\Debug\net8.0\LoopLearn.API.pdb
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.API\obj\Debug\net8.0\LoopLearn.API.genruntimeconfig.cache
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.API\obj\Debug\net8.0\ref\LoopLearn.API.dll
+F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.API\obj\Debug\net8.0\LoopLearn.API.sourcelink.json

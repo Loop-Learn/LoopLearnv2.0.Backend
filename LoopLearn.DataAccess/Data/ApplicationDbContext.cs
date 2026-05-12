@@ -59,7 +59,7 @@ namespace LoopLearn.DataAccess.Data
 
             modelBuilder.Entity<Course>()
                 .HasOne(c => c.Category)
-                .WithMany()
+                .WithMany(c=>c.Courses)
                 .HasForeignKey(c => c.CategoryId)
                 .OnDelete(DeleteBehavior.Restrict);
 

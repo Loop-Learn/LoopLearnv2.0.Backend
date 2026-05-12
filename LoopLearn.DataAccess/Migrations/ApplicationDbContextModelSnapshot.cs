@@ -130,7 +130,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Course", b =>
@@ -142,9 +142,6 @@ namespace LoopLearn.DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CategoryId1")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
@@ -194,11 +191,9 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("CategoryId1");
-
                     b.HasIndex("InstructorId");
 
-                    b.ToTable("Courses", (string)null);
+                    b.ToTable("Courses");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.CourseLearningOutcome", b =>
@@ -220,7 +215,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseLearningOutcomes", (string)null);
+                    b.ToTable("CourseLearningOutcomes");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.CourseRequirement", b =>
@@ -242,7 +237,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseRequirements", (string)null);
+                    b.ToTable("CourseRequirements");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.CourseTag", b =>
@@ -257,7 +252,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("CourseTags", (string)null);
+                    b.ToTable("CourseTags");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.CourseTargetAudience", b =>
@@ -279,7 +274,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseTargetAudiences", (string)null);
+                    b.ToTable("CourseTargetAudiences");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Enrollment", b =>
@@ -309,7 +304,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Enrollments", (string)null);
+                    b.ToTable("Enrollments");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Feedback", b =>
@@ -347,7 +342,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Feedbacks", (string)null);
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Lesson", b =>
@@ -391,7 +386,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("SectionId");
 
-                    b.ToTable("Lessons", (string)null);
+                    b.ToTable("Lessons");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.LessonComment", b =>
@@ -430,7 +425,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("LessonComments", (string)null);
+                    b.ToTable("LessonComments");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Option", b =>
@@ -455,7 +450,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("QuestionId");
 
-                    b.ToTable("Options", (string)null);
+                    b.ToTable("Options");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Question", b =>
@@ -480,7 +475,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("QuizId");
 
-                    b.ToTable("Questions", (string)null);
+                    b.ToTable("Questions");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Quiz", b =>
@@ -520,7 +515,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("SectionId");
 
-                    b.ToTable("Quizzes", (string)null);
+                    b.ToTable("Quizzes");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.QuizAttempt", b =>
@@ -556,7 +551,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("QuizAttempts", (string)null);
+                    b.ToTable("QuizAttempts");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Section", b =>
@@ -581,7 +576,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Sections", (string)null);
+                    b.ToTable("Sections");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.StudentAnswer", b =>
@@ -609,7 +604,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("QuizAttemptId");
 
-                    b.ToTable("StudentAnswers", (string)null);
+                    b.ToTable("StudentAnswers");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.StudentLessonProgress", b =>
@@ -636,7 +631,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasIndex("LessonId");
 
-                    b.ToTable("StudentLessonProgresses", (string)null);
+                    b.ToTable("StudentLessonProgresses");
                 });
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Tag", b =>
@@ -653,7 +648,7 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tags", (string)null);
+                    b.ToTable("Tags");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -792,14 +787,10 @@ namespace LoopLearn.DataAccess.Migrations
             modelBuilder.Entity("LoopLearn.Entities.Models.Course", b =>
                 {
                     b.HasOne("LoopLearn.Entities.Models.Category", "Category")
-                        .WithMany()
+                        .WithMany("Courses")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.HasOne("LoopLearn.Entities.Models.Category", null)
-                        .WithMany("Courses")
-                        .HasForeignKey("CategoryId1");
 
                     b.HasOne("LoopLearn.Entities.Models.ApplicationUser", "Instructor")
                         .WithMany("Courses")
