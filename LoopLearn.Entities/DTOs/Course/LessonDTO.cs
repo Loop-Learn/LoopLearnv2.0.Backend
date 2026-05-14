@@ -2,6 +2,7 @@
 {
     public class LessonDTO
     {
+        public int Id { get; set; }
         public string Title { get; set; }
         public TimeSpan Duration { get; set; }
         public bool isPreview { get; set; }

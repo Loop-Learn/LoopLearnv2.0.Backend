@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("LoopLearn.Entities")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e10b371b3e45106dfeb0a08f880f5cc4b8d6c622")]
 [assembly: System.Reflection.AssemblyProductAttribute("LoopLearn.Entities")]
 [assembly: System.Reflection.AssemblyTitleAttribute("LoopLearn.Entities")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

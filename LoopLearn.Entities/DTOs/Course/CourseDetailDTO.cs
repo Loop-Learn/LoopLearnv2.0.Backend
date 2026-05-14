@@ -24,7 +24,7 @@ namespace LoopLearn.Entities.DTOs.Course
 
         public DateTime UpdatedAt { get; set; }
 
-        public int InstructorId { get; set; }
+        public string InstructorId { get; set; }
 
         public string InstructorName { get; set; }
 

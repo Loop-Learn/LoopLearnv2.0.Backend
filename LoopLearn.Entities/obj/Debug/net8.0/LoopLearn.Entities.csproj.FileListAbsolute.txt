@@ -10,3 +10,4 @@ F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.Entities\o
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.Entities\obj\Debug\net8.0\refint\LoopLearn.Entities.dll
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.Entities\obj\Debug\net8.0\LoopLearn.Entities.pdb
 F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.Entities\obj\Debug\net8.0\ref\LoopLearn.Entities.dll
+F:\Electronic Engineering\Graduation Project\Looplearn.v2.0\LoopLearn.Entities\obj\Debug\net8.0\LoopLearn.Entities.sourcelink.json

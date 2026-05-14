@@ -2,6 +2,7 @@
 {
     public class SectionsDTO
     {
+        public int Id { get; set; }
         public string Title { get; set; }
         public int Order { get; set; }
         public List<LessonDTO> Lessons { get; set; } = new();

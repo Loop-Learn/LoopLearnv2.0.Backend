@@ -1,4 +1,4 @@
 Looplearn.v2.0.sln
-.vs
+.vs/
 obj
 bin

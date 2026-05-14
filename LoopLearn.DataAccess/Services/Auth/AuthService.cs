@@ -159,7 +159,7 @@ namespace LoopLearn.Application.Services.Implementations
                 issuer: _jwt.Issuer,
                 audience: _jwt.Audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddMinutes(_jwt.Duration),
+                expires: DateTime.UtcNow.AddDays(_jwt.Duration),
                 signingCredentials: credentials);
 
             return token;
