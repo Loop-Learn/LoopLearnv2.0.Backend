@@ -4,5 +4,12 @@
 
 /.vs
 Looplearn.v2.0.sln
-/obj
-/bin
+LoopLearn.DataAccess/obj
+LoopLearn.DataAccess/bin
+LoopLearn.Entities/bin
+LoopLearn.Entities/obj
+LoopLearn.API/bin
+LoopLearn.API/obj
+LoopLearn.Entities/LoopLearn.Entities.csproj
+LoopLearn.DataAccess/LoopLearn.DataAccess.csproj
+LoopLearn.API/LoopLearn.API.csproj
