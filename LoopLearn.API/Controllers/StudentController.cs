@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Security.Claims;
 using System.Threading.Tasks;
+//using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LoopLearn.API.Controllers
 {
@@ -25,6 +26,7 @@ namespace LoopLearn.API.Controllers
             _unitOfWork = unitOfWork;
             _userManager = userManager;
         }
+
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
@@ -57,7 +59,7 @@ namespace LoopLearn.API.Controllers
             }
             catch (Exception)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, 
+                return StatusCode(StatusCodes.Status500InternalServerError,
                 new
                 {
                     success = false,
@@ -65,6 +67,103 @@ namespace LoopLearn.API.Controllers
                 });
             }
         }
+
+        [HttpPut("profile/update")]
+        public async Task<IActionResult> UpdateProfile(UpdateProfileDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest(ModelState);
+
+                var studentId = GetUserId();
+                var user = await _userManager.FindByIdAsync(studentId);
+                if (user is null)
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = $"Student with ID {studentId} not found."
+                    });
+                var newUserData = new ApplicationUser()
+                {
+                    ProfileImageUrl = model.Avatar ?? user.ProfileImageUrl,
+                    FirstName = model.FirstName ?? user.FirstName,
+                    LastName = model.LastName ?? user.LastName,
+                    Email = model.Email ?? user.Email,
+                    EmailConfirmed = model.Email == null ? false : user.EmailConfirmed,
+                    PhoneNumber = model.Phone ?? user.PhoneNumber,
+                    PhoneNumberConfirmed = model.Phone == null ? false : user.PhoneNumberConfirmed
+                };
+                await _userManager.UpdateAsync(newUserData);
+                user = await _userManager.FindByIdAsync(studentId);
+                var profileDTO = MapToProfileDTO(user);
+                return Ok(new
+                {
+                    success = true,
+                    message = "User data Updated Successfully.",
+                    data = profileDTO
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid Token."
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                new
+                {
+                    success = false,
+                    message = "An error occurred while updating profile"
+                });
+            }
+
+        }
+
+        [HttpPut("changepassword")]
+        public async Task<IActionResult> ChangePassword([FromBody] PasswordDTO model)
+        {
+            try
+            {
+                if (!ModelState.IsValid) return BadRequest();
+                var studentId = GetUserId();
+                var user = await _userManager.FindByIdAsync(studentId);
+                if (user is null)
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = $"Student with ID {studentId} not found."
+                    });
+                await _userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword);
+                return Ok(new
+                {
+                    success = true,
+                    message = "Password changed successfully."
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid Token."
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                new
+                {
+                    success = false,
+                    message = "An error occurred while updating profile"
+                });
+            }
+        }
+
+
         #region Helper Methods
         private ProfileDTO MapToProfileDTO(ApplicationUser user) => new ProfileDTO
         {
