@@ -10,9 +10,17 @@ namespace LoopLearn.Entities.DTOs.Users
     public class PasswordDTO
     {
         [Required]
-        public string OldPassword { get; set; }
-        [Required]
-        public string NewPassword { get; set; }
+		[DataType(DataType.Password)]
+		public string OldPassword { get; set; }
 
-    }
+        [Required]
+        [DataType(DataType.Password)]
+		public string NewPassword { get; set; }
+
+        [Required]
+        [Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")]
+        public string ConfirmPassword { get; set; }
+
+
+	}
 }

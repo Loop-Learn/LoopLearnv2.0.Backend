@@ -5,8 +5,6 @@ namespace LoopLearn.Entities.DTOs.Users
 {
     public class UpdateProfileDTO
     {
-        [AvatarUrl]
-        public string? Avatar { get; set; }
         [Name]
         public string? FirstName { get; set; }
         [Name]
