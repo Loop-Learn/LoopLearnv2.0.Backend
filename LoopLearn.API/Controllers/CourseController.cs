@@ -326,9 +326,15 @@ namespace LoopLearn.API.Controllers
 			}
 		}
 
+  //      [HttpPut("{courseId}")]
+  //      [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+  //      public async Task<IActionResult> UpdateCourse(int courseId, UpdateCourseDTO model)
+		//{
+
+		//}
 
 
-		#region Helper Methods
+        #region Helper Methods
         private static Expression<Func<Course, CourseCardDTO>> MapToCourseCardDTO =>
 			   c => new CourseCardDTO
 			   {

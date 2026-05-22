@@ -11,6 +11,7 @@ namespace LoopLearn.Entities.Interfaces
         IQuizAttemptRepository QuizAttempts { get; }
         IFeedbackRepository Feedbacks { get; }
         ICategoryRepository Categories { get; }
+        ITagRepository Tags { get; }
 
         Task<int> SaveAsync();
     }

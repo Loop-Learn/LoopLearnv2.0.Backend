@@ -15,6 +15,7 @@ namespace LoopLearn.DataAccess.Implementation
         IQuizAttemptRepository _quizAttempts;
         IFeedbackRepository _feedbacks;
         ICategoryRepository _categories;
+        ITagRepository _tags;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -111,6 +112,19 @@ namespace LoopLearn.DataAccess.Implementation
                 return _categories;
             }
             private set { _categories = value; }
+        }
+        public ITagRepository Tags
+        {
+            get
+            {
+                if (_tags is null)
+                {
+                    _tags = new TagRepository(_context);
+                }
+
+                return _tags;
+            }
+            private set { _tags = value; }
         }
         public void Dispose()
         {
