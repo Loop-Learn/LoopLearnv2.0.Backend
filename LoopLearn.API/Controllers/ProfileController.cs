@@ -1,6 +1,7 @@
 ﻿using LoopLearn.DataAccess.Implementation;
 using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.DTOs.Users;
+using LoopLearn.Entities.Helpers.CustomValidations;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -17,11 +18,11 @@ namespace LoopLearn.API.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class StudentController : ControllerBase
+    public class ProfileController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly UserManager<ApplicationUser> _userManager;
-        public StudentController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
+        public ProfileController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
         {
             _unitOfWork = unitOfWork;
             _userManager = userManager;
@@ -121,6 +122,46 @@ namespace LoopLearn.API.Controllers
                 });
             }
 
+        }
+        [HttpPut("avatar")]
+        public async Task<IActionResult> ChangeAvatar(string profileImageUrl)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var studentId = GetUserId();
+            var user = await _userManager.FindByIdAsync(studentId);
+            if (user is null)
+                return NotFound(new
+                {
+                    success = false,
+                    message = $"Student with ID {studentId} not found."
+                });
+            if(!(new AvatarUrlAttribute().IsValid(profileImageUrl))) 
+                return BadRequest(new
+                {
+                    success = false,
+                    message = $"ImageUrl {profileImageUrl} not Valid."
+                });
+            user.ProfileImageUrl = profileImageUrl;
+
+            var result = await _userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError ,
+                new
+                {
+                    success = false,
+                    message = "Failed to update profile Image.",
+                    errors = result.Errors.Select(e => e.Description)
+                });
+            }
+            user = await _userManager.FindByIdAsync(studentId);
+            var profileDTO = MapToProfileDTO(user);
+            return Ok(new
+            {
+                success = true,
+                message= "Update Profile image successfully.",
+                data = profileDTO
+            });
         }
 
         [HttpPut("changepassword")]
