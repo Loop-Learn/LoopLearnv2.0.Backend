@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace LoopLearn.API
 {
@@ -83,6 +84,12 @@ namespace LoopLearn.API
 
             builder.Services.AddControllers();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddControllers()
+               .AddJsonOptions(options =>
+               {
+                   options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+               });
 
             var app = builder.Build();
 

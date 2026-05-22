@@ -1,6 +1,8 @@
 ﻿using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 
@@ -250,8 +252,84 @@ namespace LoopLearn.API.Controllers
 			}
 		}
 
+		[HttpPost("create")]
+		[Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+        public async Task<IActionResult> CreateCourse(CourseCreationDTO model)
+		{
+			try
+			{
+				// Get instructor ID from token
+				var instructorId = GetUserId();
+
+				if (!ModelState.IsValid)
+				{
+					return BadRequest(new
+					{
+						success = false,
+						message = "Invalid course data",
+						errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+					});
+				}
+
+				// Check if category exists
+				var category = await _unitOfWork.Categories.GetFirstOrDefaultAsync(c => c.Name == model.Category);
+				if (category is null)
+				{
+					return NotFound(new
+					{
+						success = false,
+						message = $"Category '{model.Category}' not found."
+					});
+				}
+
+				var course = new Course
+				{
+					Title = model.Title,
+					CategoryId = category.Id,
+					InstructorId = instructorId,
+					Status = model.Status,
+					CreatedAt = DateTime.UtcNow,
+					UpdatedAt = DateTime.UtcNow
+				};
+
+				await _unitOfWork.Courses.AddAsync(course);
+				await _unitOfWork.SaveAsync();
+
+				return CreatedAtAction(nameof(GetCoursesById), new { courseId = course.Id }, new
+				{
+					success = true,
+					message = "Course created successfully",
+					data = new
+					{
+						id = course.Id,
+						title = course.Title,
+						category = category.Name,
+						status = course.Status.ToString()
+					}
+				});
+			}
+			catch (UnauthorizedAccessException)
+			{
+				return Unauthorized(new
+				{
+					success = false,
+					message = "Invalid Token."
+				});
+			}
+			catch (Exception)
+			{
+				return StatusCode(StatusCodes.Status500InternalServerError, new
+				{
+					success = false,
+					message = "An unexpected error occurred while creating the course."
+				});
+			}
+		}
+
+
+
 		#region Helper Methods
-		private static Expression<Func<Course, CourseCardDTO>> MapToCourseCardDTO =>
+        private static Expression<Func<Course, CourseCardDTO>> MapToCourseCardDTO =>
 			   c => new CourseCardDTO
 			   {
 				   Id = c.Id,
@@ -351,7 +429,17 @@ namespace LoopLearn.API.Controllers
 				PostedAt = f.UpdatedAt ?? f.CreatedAt
 			}).OrderBy(f => f.PostedAt).ThenBy(f => f.Rating).ToList();
 		}
-		#endregion
+        private string GetUserId()
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                throw new UnauthorizedAccessException();
+            }
 
-	}
+            return userIdClaim;
+        }
+        #endregion
+
+    }
 }
