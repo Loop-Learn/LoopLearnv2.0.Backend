@@ -7,7 +7,7 @@ namespace LoopLearn.Entities.Models
     {
         public string FirstName { get; set; }
         public string LastName { get; set; }
-        public string FullName  => $"{FirstName} {FullName}";
+        public string FullName  => $"{FirstName} {LastName}";
         public string? Bio { get; set; }
         public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }

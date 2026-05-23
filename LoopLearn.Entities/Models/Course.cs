@@ -8,21 +8,21 @@ namespace LoopLearn.Entities.Models
 
         public string Title { get; set; }
 
-        public string Subtitle { get; set; }
+        public string Subtitle { get; set; } 
 
-        public string Description { get; set; }
+        public string Description { get; set; } 
 
-        public string ThumbnailUrl { get; set; }
+        public string ThumbnailUrl { get; set; } 
 
         public decimal Price { get; set; }
 
         public bool IsFree { get; set; }
 
-        public CourseLevel Level { get; set; }
+        public CourseLevel Level { get; set; } 
 
-        public string Language { get; set; }
+        public string Language { get; set; } 
 
-        public CourseStatus Status { get; set; }
+        public CourseStatus Status { get; set; } 
 
         public DateTime CreatedAt { get; set; }
 

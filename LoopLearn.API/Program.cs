@@ -20,7 +20,8 @@ namespace LoopLearn.API
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                                            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+                                            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
 
             // Repositories
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -89,6 +90,8 @@ namespace LoopLearn.API
                .AddJsonOptions(options =>
                {
                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                   options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                   options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                });
 
             var app = builder.Build();

@@ -92,5 +92,24 @@ namespace LoopLearn.DataAccess.Implementation.Repositories
 
 			return await query.FirstOrDefaultAsync();
 		}
-	}
+        public void Remove(T entity)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            _dbSet.Remove(entity);
+        }
+
+        public void RemoveRange(IEnumerable<T> entities)
+        {
+            if (entities == null || !entities.Any())
+				return;
+			
+			_dbSet.RemoveRange(entities);
+        }
+
+        public void Update(T entity)
+        {
+            if (entity == null) throw new ArgumentNullException(nameof(entity));
+            _dbSet.Update(entity);
+        }
+    }
 }

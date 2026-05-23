@@ -21,6 +21,7 @@ namespace LoopLearn.Entities.Models
 
         public Section Section { get; set; }
 
+        public int? QuizId { get; set; }
         public Quiz Quiz { get; set; }
 
         public ICollection<StudentLessonProgress> LessonProgresses { get; set; }
