@@ -11,7 +11,6 @@ namespace LoopLearn.Entities.DTOs.Course
         public string Title { get; set; }
         [Required]
         public string Category { get; set; }
-        public CourseStatus Status { get; set; } = CourseStatus.Draft;
     }
     public class LessonCreationDTO
     {

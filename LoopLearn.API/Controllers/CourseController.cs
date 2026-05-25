@@ -35,7 +35,7 @@ namespace LoopLearn.API.Controllers
                 }
                 var coursesDTOs = await _unitOfWork.Courses.GetAsync(
                                                         selector: MapToCourseCardDTO,
-                                                        include: "Instructor,Feedbacks");
+                                                        include: "Instructor,Feedbacks,Category");
 
                 if (coursesDTOs is null || !coursesDTOs.Any())
                 {
@@ -287,7 +287,7 @@ namespace LoopLearn.API.Controllers
                     Title = model.Title,
                     CategoryId = category.Id,
                     InstructorId = instructorId,
-                    Status = model.Status,
+                    Status = CourseStatus.Draft,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow,
                     ThumbnailUrl = "",
@@ -719,7 +719,8 @@ namespace LoopLearn.API.Controllers
                    TotalRatings = c.Feedbacks != null && c.Feedbacks.Any() ? c.Feedbacks.Count() : 0,
                    Price = c.Price,
                    IsFree = c.IsFree,
-                   Level = c.Level.ToString()
+                   Level = c.Level.ToString(),
+                   Category = c.Category.Name
                };
         private CourseDetailDTO MapToCourseDetailDTO(Course course)
         {

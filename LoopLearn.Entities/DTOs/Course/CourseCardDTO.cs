@@ -18,6 +18,7 @@ namespace LoopLearn.Entities.DTOs.Course
 
         public bool IsFree { get; set; }
 
+        public string Category { get; set; }
         public string Level { get; set; }
 
     }
