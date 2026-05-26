@@ -2,6 +2,7 @@
 using LoopLearn.DataAccess.Implementation.Repositories;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LoopLearn.DataAccess.Implementation
 {
@@ -24,6 +25,7 @@ namespace LoopLearn.DataAccess.Implementation
 		ILessonRepository _lessons;
 		IQuestionRepository _questions;
 		IOptionRepository _options;
+		IPaymentRepository _payments;
 
 		public UnitOfWork(ApplicationDbContext context)
 		{
@@ -254,6 +256,19 @@ namespace LoopLearn.DataAccess.Implementation
 			private set { _options = value; }
 		}
 
+		public IPaymentRepository Payments
+		{
+			get
+			{
+				if (_payments is null)
+				{
+					_payments = new PaymentRepository(_context);
+				}
+				return _payments;
+			}
+			private set { _payments = value; }
+		}
+
 		public void Dispose()
 		{
 			_context.Dispose();
@@ -262,6 +277,11 @@ namespace LoopLearn.DataAccess.Implementation
 		public async Task<int> SaveAsync()
 		{
 			return await _context.SaveChangesAsync();
+		}
+
+		public async Task<IDbContextTransaction> BeginTransactionAsync()
+		{
+			return await _context.Database.BeginTransactionAsync();
 		}
 	}
 }

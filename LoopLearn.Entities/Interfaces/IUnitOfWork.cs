@@ -1,4 +1,5 @@
 ﻿using LoopLearn.Entities.Interfaces.Repositories;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace LoopLearn.Entities.Interfaces
 {
@@ -20,7 +21,10 @@ namespace LoopLearn.Entities.Interfaces
         ILessonRepository Lessons { get; }
         IQuestionRepository Questions { get; }
         IOptionRepository Options { get; }
+        IPaymentRepository Payments { get; }
 
-        Task<int> SaveAsync();
-    }
+		Task<int> SaveAsync();
+
+        Task<IDbContextTransaction> BeginTransactionAsync();
+	}
 }

@@ -1,0 +1,404 @@
+{
+  "project": {
+    "name": "LoopLearn",
+    "description": "ASP.NET Core 8 Web API for an online learning platform similar to Udemy/Coursera",
+    "version": "2.0",
+    "lastUpdated": "2026-05-25",
+    "status": "Mid-Stage Development (MVP Features Complete)",
+    "repository": {
+      "url": "https://github.com/Loop-Learn/LoopLearnv2.0.Backend",
+      "branch": "Profile",
+      "location": "G:\\مشروع التخرج\\LoopLearn Project\\LoopLearnV02-Backend\\LoopLearnv2.0.Backend"
+    }
+  },
+  "techStack": {
+    "framework": "ASP.NET Core 8.0",
+    "database": "SQL Server",
+    "orm": "Entity Framework Core 8.0",
+    "authentication": "JWT (HS256)",
+    "authorization": "ASP.NET Core Identity",
+    "api": "Swagger/OpenAPI",
+    "serialization": "System.Text.Json",
+    "logging": "ILogger (built-in)",
+    "dependencyInjection": "Built-in Container",
+    "cors": "ASP.NET Core CORS"
+  },
+  "architecture": {
+    "pattern": "Layered N-Tier Architecture",
+    "layers": [
+      {
+        "name": "Presentation Layer",
+        "project": "LoopLearn.API",
+        "responsibilities": [
+          "HTTP endpoints (Controllers)",
+          "Request/Response handling",
+          "Input validation",
+          "Authorization enforcement"
+        ]
+      },
+      {
+        "name": "Data Access & Services Layer",
+        "project": "LoopLearn.DataAccess",
+        "responsibilities": [
+          "Repository implementations",
+          "Unit of Work pattern",
+          "Business services",
+          "Database context",
+          "Migrations"
+        ]
+      },
+      {
+        "name": "Domain/Entity Layer",
+        "project": "LoopLearn.Entities",
+        "responsibilities": [
+          "Entity models",
+          "Data transfer objects",
+          "Repository interfaces",
+          "Custom validation",
+          "Exception types",
+          "Enums and constants"
+        ]
+      },
+      {
+        "name": "Persistence Layer",
+        "project": "SQL Server Database",
+        "responsibilities": [
+          "Relational data storage",
+          "Identity management",
+          "Transaction management"
+        ]
+      }
+    ],
+    "designPatterns": [
+      {
+        "name": "Repository Pattern",
+        "description": "Abstracts data access logic",
+        "interfaces": [
+          "IGenericRepository<T>",
+          "ICourseRepository",
+          "ITagRepository",
+          "ICategoryRepository"
+        ]
+      },
+      {
+        "name": "Unit of Work Pattern",
+        "description": "Centralized transaction management",
+        "interface": "IUnitOfWork"
+      },
+      {
+        "name": "Dependency Injection",
+        "description": "Constructor-based dependency injection",
+        "scope": "Scoped for DbContext"
+      },
+      {
+        "name": "DTO Pattern",
+        "description": "Decouples API contracts from models",
+        "examples": [
+          "CourseCreationDTO",
+          "UpdateCourseDTO",
+          "CourseDetailDTO"
+        ]
+      },
+      {
+        "name": "Async/Await",
+        "description": "Non-blocking I/O operations"
+      },
+      {
+        "name": "Custom Validation Attributes",
+        "description": "Domain-specific validation rules",
+        "examples": [
+          "CourseTitle",
+          "Username",
+          "Email"
+        ]
+      }
+    ]
+  },
+  "implementationStatus": {
+    "completed": {
+      "authentication": [
+        "JWT token generation",
+        "User registration",
+        "User login",
+        "Password hashing",
+        "Account lockout",
+        "Role-based access control"
+      ],
+      "courseManagement": [
+        "Create course",
+        "Get all courses (paginated)",
+        "Get course by ID",
+        "Filter by categories",
+        "Full-text search",
+        "Update course with nested data"
+      ],
+      "database": [
+        "Entity Framework Core",
+        "SQL Server integration",
+        "All entity models",
+        "Relationships and foreign keys",
+        "Composite keys",
+        "Database migrations",
+        "Seeding"
+      ],
+      "architecture": [
+        "Repository pattern",
+        "Unit of Work pattern",
+        "Dependency injection",
+        "CORS configuration",
+        "Swagger documentation",
+        "Custom exception handling"
+      ]
+    },
+    "pending": {
+      "highPriority": [
+        "Student enrollment endpoints",
+        "Progress tracking endpoints",
+        "Quiz submission and grading",
+        "Course reviews/feedback",
+        "Payment integration"
+      ],
+      "mediumPriority": [
+        "Email notifications",
+        "Certificate generation",
+        "Admin course approval workflow",
+        "Analytics dashboard",
+        "File upload (videos/images)"
+      ],
+      "lowPriority": [
+        "Lesson comments",
+        "Recommendations engine",
+        "Wishlists",
+        "Learning paths",
+        "Discussion forums",
+        "Badges/achievements"
+      ]
+    }
+  },
+  "knownIssues": [
+    {
+      "id": 1,
+      "title": "UpdateCourse Transaction Management",
+      "severity": "High",
+      "description": "SaveAsync() called multiple times within UpdateCourse, risking partial updates",
+      "impact": "Orphaned sections/lessons if operation fails mid-way",
+      "recommendation": "Use DbContextTransaction for atomicity"
+    },
+    {
+      "id": 2,
+      "title": "N+1 Query Problem",
+      "severity": "Medium",
+      "description": "GetCoursesById includes multiple navigation properties causing multiple queries",
+      "impact": "Performance degradation with large datasets",
+      "recommendation": "Use projection/SelectMany for specific needs"
+    },
+    {
+      "id": 3,
+      "title": "No Soft Delete Implementation",
+      "severity": "Medium",
+      "description": "Cascade delete loses student progress and enrollment data",
+      "impact": "Data loss and audit trail loss",
+      "recommendation": "Add IsDeleted flag to Course and related entities"
+    },
+    {
+      "id": 4,
+      "title": "No Concurrency Control",
+      "severity": "Medium",
+      "description": "No optimistic locking (RowVersion) implemented",
+      "impact": "Multiple users could corrupt course data",
+      "recommendation": "Add [Timestamp] property to Course model"
+    },
+    {
+      "id": 5,
+      "title": "No Rate Limiting",
+      "severity": "Low",
+      "description": "API has no throttling or rate limiting",
+      "recommendation": "Implement AspNetCoreRateLimit middleware"
+    },
+    {
+      "id": 6,
+      "title": "No Caching Strategy",
+      "severity": "Low",
+      "description": "No caching layer implemented",
+      "recommendation": "Add Redis for categories and popular courses"
+    },
+    {
+      "id": 7,
+      "title": "No File Upload Capability",
+      "severity": "Medium",
+      "description": "Courses use URLs only, no file upload",
+      "recommendation": "Implement Azure Blob Storage or AWS S3"
+    }
+  ],
+  "nextSteps": {
+    "phases": [
+      {
+        "name": "Phase 1: MVP Core Features",
+        "duration": "Weeks 1-2",
+        "goal": "Enable students to enroll, progress, and complete courses",
+        "tasks": [
+          {
+            "task": "Enrollment Endpoints",
+            "duration": "2-3 days",
+            "description": "POST /enrollment, GET /courses, DELETE /enrollment",
+            "subtasks": [
+              "Enroll student in course",
+              "Prevent duplicate enrollments",
+              "Get student's enrolled courses"
+            ]
+          },
+          {
+            "task": "Progress Tracking",
+            "duration": "2-3 days",
+            "description": "Track lesson watch percentage and course progress",
+            "subtasks": [
+              "GET /progress/lessons/{id}",
+              "PUT /progress/lessons/{id}",
+              "GET /progress/courses/{id}",
+              "Auto-complete at 80%"
+            ]
+          },
+          {
+            "task": "Quiz Submission",
+            "duration": "3-4 days",
+            "description": "Submit answers and auto-grade quizzes",
+            "subtasks": [
+              "GET /quiz/{id}",
+              "POST /quiz/{id}/submit",
+              "Auto-grade MC/TF questions",
+              "Record attempts"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Phase 2: User Experience Features",
+        "duration": "Weeks 3-4",
+        "goal": "Add reviews and improve course feedback",
+        "tasks": [
+          {
+            "task": "Course Reviews",
+            "duration": "2-3 days",
+            "description": "Post, read, update, delete reviews",
+            "subtasks": [
+              "POST /feedback/courses/{id}",
+              "GET /feedback/courses/{id}",
+              "PUT /feedback/{id}",
+              "DELETE /feedback/{id}"
+            ]
+          },
+          {
+            "task": "Lesson Comments (Optional)",
+            "duration": "2 days",
+            "description": "Comments on lessons for discussion"
+          }
+        ]
+      },
+      {
+        "name": "Phase 3: Monetization",
+        "duration": "Weeks 5-6",
+        "goal": "Enable paid courses with payment processing",
+        "tasks": [
+          {
+            "task": "Payment Integration",
+            "duration": "3-4 days",
+            "description": "Stripe or PayPal integration",
+            "subtasks": [
+              "POST /payments/checkout",
+              "Webhook handling",
+              "Access control after payment"
+            ]
+          },
+          {
+            "task": "Payment Records",
+            "duration": "1-2 days",
+            "description": "Track transactions and revenue"
+          }
+        ]
+      },
+      {
+        "name": "Phase 4: Content Features",
+        "duration": "Weeks 7-8",
+        "goal": "Enable file uploads and content management",
+        "tasks": [
+          {
+            "task": "File Upload",
+            "duration": "3-4 days",
+            "description": "Azure Blob Storage or AWS S3 integration",
+            "subtasks": [
+              "Video upload",
+              "Image upload",
+              "CDN URL generation"
+            ]
+          },
+          {
+            "task": "Course Deletion",
+            "duration": "1 day",
+            "description": "Soft delete courses"
+          }
+        ]
+      },
+      {
+        "name": "Phase 5: Admin & Analytics",
+        "duration": "Weeks 9-10",
+        "goal": "Add moderation and instructor analytics",
+        "tasks": [
+          {
+            "task": "Course Approval Workflow",
+            "duration": "2-3 days",
+            "description": "Admin approval/rejection of courses"
+          },
+          {
+            "task": "Analytics Dashboard",
+            "duration": "2-3 days",
+            "description": "Course, student, and instructor statistics"
+          }
+        ]
+      },
+      {
+        "name": "Phase 6: Notifications & Certificates",
+        "duration": "Weeks 11-12",
+        "goal": "Enhance engagement with notifications and credentials",
+        "tasks": [
+          {
+            "task": "Email Notifications",
+            "duration": "2-3 days",
+            "description": "SendGrid or Mailgun integration"
+          },
+          {
+            "task": "Certificate Generation",
+            "duration": "2-3 days",
+            "description": "PDF certificates on completion"
+          }
+        ]
+      }
+    ],
+    "timeline": {
+      "totalWeeks": 12,
+      "withParallelWork": "6-8 weeks",
+      "phases": "Sequential with opportunity for parallelization"
+    }
+  },
+  "quickStart": {
+    "cloneRepository": "git clone https://github.com/Loop-Learn/LoopLearnv2.0.Backend.git",
+    "switchBranch": "git checkout Profile",
+    "setupDatabase": "dotnet ef database update",
+    "runApplication": "dotnet run",
+    "apiUrl": "https://localhost:7xxx",
+    "swaggerUI": "https://localhost:7xxx/swagger",
+    "keyFilesReview": [
+      "LoopLearn.API/Controllers/CourseController.cs",
+      "LoopLearn.Entities/Models/Course.cs",
+      "LoopLearn.DataAccess/Implementation/UnitOfWork.cs",
+      "LoopLearn.API/Program.cs"
+    ]
+  },
+  "documentMetadata": {
+    "version": "1.0",
+    "lastUpdated": "2026-05-25",
+    "nextReview": "After Phase 1 Completion",
+    "format": "Markdown and JSON",
+    "location": "LoopLearn.Entities/Helpers/",
+    "purpose": "Knowledge transfer for next developer"
+  }
+}
