@@ -41,7 +41,10 @@ namespace LoopLearn.API
             .AddDefaultTokenProviders();
             // Configuration
             var jwtSettings = builder.Configuration.GetSection("Jwt");
+            var stripeSettings = builder.Configuration.GetSection("Stripe");
+
             builder.Services.Configure<Jwt>(jwtSettings);
+            builder.Services.Configure<StripeSettings>(stripeSettings);
 
             // Authentication
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);

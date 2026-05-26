@@ -1,10 +1,4 @@
 ﻿using LoopLearn.Entities.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace LoopLearn.Entities.Models
 {
 	public class Payment
@@ -22,7 +16,7 @@ namespace LoopLearn.Entities.Models
 
 		// Stripe IDs — محتاجينهم للـ Webhook
 		public string StripeSessionId { get; set; }
-		public string StripePaymentIntentId { get; set; }
+		public string? StripePaymentIntentId { get; set; }
 
 		public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
