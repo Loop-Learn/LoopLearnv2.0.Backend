@@ -24,15 +24,27 @@ namespace LoopLearn.DataAccess.Implementation.Repositories
 			if (entities == null) throw new ArgumentNullException(nameof(entities));
 			await _dbSet.AddRangeAsync(entities);
 		}
-		public async Task<bool> ExistsAsync(Expression<Func<T, bool>>? predicate = null)
+		public async Task<bool> ExistsAsync(Expression<Func<T, bool>>? predicate = null, bool ignoreQueryFilters = false)
 		{
+			IQueryable<T> query = _dbSet;
+			
+			if (ignoreQueryFilters)
+			{
+				query = query.IgnoreQueryFilters();
+			}
+
 			return predicate == null
 					? await _dbSet.AnyAsync()
 					: await _dbSet.AnyAsync(predicate);
 		}
-		public async Task<IEnumerable<TResult>> GetAsync<TResult>(Expression<Func<T, bool>>? predicate = null, Expression<Func<T, TResult>>? selector = null, string? includes = null)
+		public async Task<IEnumerable<TResult>> GetAsync<TResult>(Expression<Func<T, bool>>? predicate = null, Expression<Func<T, TResult>>? selector = null, string? includes = null, bool ignoreQueryFilters = false)
 		{
 			IQueryable<T> query = _dbSet;
+
+			if (ignoreQueryFilters)
+			{
+				query = query.IgnoreQueryFilters();
+			}
 
 			if (predicate != null)
 			{
@@ -54,9 +66,14 @@ namespace LoopLearn.DataAccess.Implementation.Repositories
 
 			return await query.Cast<TResult>().ToListAsync();
 		}
-		public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? predicate = null, string? includes = null)
+		public async Task<IEnumerable<T>> GetAllAsync(Expression<Func<T, bool>>? predicate = null, string? includes = null, bool ignoreQueryFilters = false)
 		{
 			IQueryable<T> query = _dbSet;
+
+			if(ignoreQueryFilters)
+			{
+				query = query.IgnoreQueryFilters();
+			}
 
 			if (predicate != null)
 			{
@@ -73,9 +90,14 @@ namespace LoopLearn.DataAccess.Implementation.Repositories
 
 			return await query.ToListAsync();
 		}
-		public async Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>>? predicate = null, string? includes = null)
+		public async Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>>? predicate = null, string? includes = null, bool ignoreQueryFilters = false)
 		{
 			IQueryable<T> query = _dbSet;
+
+			if (ignoreQueryFilters)
+			{
+				query = query.IgnoreQueryFilters();
+			}
 
 			if (predicate != null)
 			{
