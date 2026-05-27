@@ -124,7 +124,7 @@ namespace LoopLearn.API
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseStaticFiles();
             app.UseHttpsRedirection();
             app.UseCors("AllowAll");
             app.UseAuthentication();
