@@ -14,6 +14,7 @@ namespace LoopLearn.Entities.DTOs.Enrollment
 		public string ThumbnailUrl { get; set; }
 		public string InstructorName { get; set; }
 		public double ProgressPercentage { get; set; }
+		public bool IsCourseAvailable { get; set; }
 		public bool IsCompleted { get; set; }
 		public DateTime EnrolledAt { get; set; }
 		public DateTime? LastAccessAt { get; set; }

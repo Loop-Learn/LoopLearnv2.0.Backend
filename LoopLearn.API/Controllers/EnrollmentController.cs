@@ -37,7 +37,7 @@ namespace LoopLearn.API.Controllers
 				var studentId = GetUserId();
 
 				var course = await _unitOfWork.Courses
-					.GetFirstOrDefaultAsync(c => c.Id == courseId);
+					.GetFirstOrDefaultAsync(c => c.Id == courseId, ignoreQueryFilters: true);
 
 				if (course is null || course.IsDeleted)
 					return NotFound(new { success = false, message = "Course not found." });
@@ -117,13 +117,15 @@ namespace LoopLearn.API.Controllers
 							ThumbnailUrl = e.Course.ThumbnailUrl,
 							InstructorName = e.Course.Instructor.FullName,
 							ProgressPercentage = e.ProgressPercentage,
+							IsCourseAvailable = !e.Course.IsDeleted,
 							IsCompleted = e.IsCompleted,
 							EnrolledAt = e.EnrolledAt,
 							LastAccessAt = e.LastAccessAt,
 							CompletedAt = e.CompletedAt,
 
 						},
-						include: "Course,Course.Instructor"
+						include: "Course,Course.Instructor",
+						ignoreQueryFilters: true
 					);
 
 				return Ok(new { success = true, data = studentEnrollments });

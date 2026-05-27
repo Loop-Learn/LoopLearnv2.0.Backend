@@ -42,8 +42,8 @@ namespace LoopLearn.API.Controllers
             {
                 var studentId = GetUserId();
 
-                var course = await _unitOfWork.Courses
-                    .GetFirstOrDefaultAsync(c => c.Id == model.CourseId);
+				var course = await _unitOfWork.Courses
+					.GetFirstOrDefaultAsync(c => c.Id == model.CourseId, ignoreQueryFilters: true);
 
                 if (course is null || course.IsDeleted)
                     return NotFound(new { success = false, message = "Course not found." });
