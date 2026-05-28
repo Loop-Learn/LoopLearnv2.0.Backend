@@ -1,6 +1,7 @@
 using LoopLearn.Application.Services.Implementations;
 using LoopLearn.DataAccess.Data;
 using LoopLearn.DataAccess.Implementation;
+using LoopLearn.DataAccess.Services.Course;
 using LoopLearn.DataAccess.Services.Enroll;
 using LoopLearn.Entities.Helpers.Models;
 using LoopLearn.Entities.Interfaces;
@@ -32,6 +33,8 @@ namespace LoopLearn.API
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<AuthService, AuthService>();
             builder.Services.AddScoped<EnrollmentService, EnrollmentService>();
+            builder.Services.AddScoped<CourseValidationService, CourseValidationService>();
+
 
             // ── Identity ──────────────────────────────────────────────────────
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>

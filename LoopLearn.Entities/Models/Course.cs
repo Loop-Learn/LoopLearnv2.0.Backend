@@ -31,8 +31,10 @@ namespace LoopLearn.Entities.Models
 		public bool IsDeleted { get; set; } = false;
 
 		public DateTime? DeletedAt { get; set; }
+        public DateTime? SubmittedForReviewAt { get; set; }
+        public DateTime? PublishedAt { get; set; }
 
-		public string InstructorId { get; set; }
+        public string InstructorId { get; set; }
 
         public ApplicationUser Instructor { get; set; }
 
@@ -54,5 +56,6 @@ namespace LoopLearn.Entities.Models
         public ICollection<CourseTargetAudience> TargetAudiences { get; set; }
 
         public ICollection<CourseTag> CourseTags { get; set; }
+        public ICollection<CourseReviewHistory> ReviewHistories { get; set; }
     }
 }

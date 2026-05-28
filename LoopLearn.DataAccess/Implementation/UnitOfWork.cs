@@ -26,6 +26,7 @@ namespace LoopLearn.DataAccess.Implementation
 		IQuestionRepository _questions;
 		IOptionRepository _options;
 		IPaymentRepository _payments;
+		ICourseReviewHistoryRepository _courseReviewHistoryRepository;
 
 		public UnitOfWork(ApplicationDbContext context)
 		{
@@ -269,7 +270,20 @@ namespace LoopLearn.DataAccess.Implementation
 			private set { _payments = value; }
 		}
 
-		public void Dispose()
+        public ICourseReviewHistoryRepository CourseReviewHistories
+        {
+            get
+            {
+                if (_courseReviewHistoryRepository is null)
+                {
+                    _courseReviewHistoryRepository = new CourseReviewHistoryRepository(_context);
+                }
+                return _courseReviewHistoryRepository;
+            }
+            private set { _courseReviewHistoryRepository = value; }
+        }
+
+        public void Dispose()
 		{
 			_context.Dispose();
 		}

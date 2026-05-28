@@ -22,8 +22,10 @@ namespace LoopLearn.Entities.Interfaces
         IQuestionRepository Questions { get; }
         IOptionRepository Options { get; }
         IPaymentRepository Payments { get; }
+        ICourseReviewHistoryRepository CourseReviewHistories { get; }
 
-		Task<int> SaveAsync();
+
+        Task<int> SaveAsync();
 
         Task<IDbContextTransaction> BeginTransactionAsync();
 	}

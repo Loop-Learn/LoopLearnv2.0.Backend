@@ -27,7 +27,6 @@ namespace LoopLearn.API.Controllers
             _unitOfWork = unitOfWork;
             _stripeSettings = stripeOptions.Value;
             _enrollmentService = enrollmentService;
-            // StripeConfiguration.ApiKey is set once at startup in Program.cs — not here
         }
 
         private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -52,8 +51,8 @@ namespace LoopLearn.API.Controllers
                 if (course is null || course.IsDeleted)
                     return NotFound(new { success = false, message = "Course not found." });
 
-                //if (course.Status != CourseStatus.Published)
-                //    return BadRequest(new { success = false, message = "Course is not available." });
+                if (course.Status != CourseStatus.Published)
+                    return BadRequest(new { success = false, message = "Course is not available." });
 
                 if (course.IsFree)
                     return BadRequest(new
