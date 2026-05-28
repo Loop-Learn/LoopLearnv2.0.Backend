@@ -17,10 +17,12 @@ namespace LoopLearn.Entities.Models
 
         public string StripeSessionId { get; set; }
         public string? StripePaymentIntentId { get; set; }
+        public string? StripeRefundId { get; set; }
 
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? PaidAt { get; set; }
+        public DateTime? RefundedAt { get; set; }
     }
 }

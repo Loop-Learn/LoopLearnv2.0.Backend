@@ -98,7 +98,7 @@ namespace LoopLearn.API.Controllers
 
                 var studentEnrollments = await _unitOfWork.Enrollments
                     .GetAsync(
-                        predicate: e => e.StudentId == studentId,
+                        predicate: e => e.StudentId == studentId && e.Status == EnrollmentStatus.Active,
                         selector: e => new EnrolledCourseDTO
                         {
                             CourseId = e.CourseId,

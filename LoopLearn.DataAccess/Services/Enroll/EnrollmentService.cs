@@ -25,16 +25,29 @@ namespace LoopLearn.DataAccess.Services.Enroll
         /// <returns>
         ///     The created <see cref="Enrollment"/>, or null if the student was already enrolled.
         /// </returns>
-        public async Task<Enrollment?> EnrollStudentAsync(
-            string studentId,
-            int courseId,
-            int? paymentId = null)
+        public async Task<Enrollment?> EnrollStudentAsync(string studentId, int courseId, int? paymentId = null)
         {
-            var alreadyEnrolled = await _unitOfWork.Enrollments
-                .ExistsAsync(e => e.StudentId == studentId && e.CourseId == courseId);
+            var existing = await _unitOfWork.Enrollments
+                          .GetFirstOrDefaultAsync(e => e.StudentId == studentId && e.CourseId == courseId);
 
-            if (alreadyEnrolled)
+            // Active enrollment — genuinely already enrolled
+            if (existing is not null && existing.Status == EnrollmentStatus.Active)
                 return null;
+
+            if (existing is not null && existing.Status == EnrollmentStatus.Refunded)
+            {
+                // Re-enrollment after refund — reset the existing record
+                // rather than creating a duplicate row
+                existing.Status = EnrollmentStatus.Active;
+                existing.PaymentId = paymentId;
+                existing.ProgressPercentage = 0;
+                existing.IsCompleted = false;
+                existing.EnrolledAt = DateTime.UtcNow;
+                existing.LastAccessAt = DateTime.UtcNow;
+                existing.CompletedAt = null;
+                _unitOfWork.Enrollments.Update(existing);
+                return existing;
+            }
 
             var enrollment = new Enrollment
             {
