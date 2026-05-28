@@ -10,7 +10,8 @@ namespace LoopLearn.Entities.Interfaces.Repositories
         Task<IEnumerable<TResult>> GetAsync<TResult>(Expression<Func<T, bool>>? predicate = null,
                                                      Expression<Func<T, TResult>>? selector = null,
                                                      string? include = null,
-                                                     bool ignoreQueryFilters = false);
+                                                     bool ignoreQueryFilters = false,
+                                                     Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null);
         Task<T> GetFirstOrDefaultAsync(Expression<Func<T, bool>>? predicate = null,
                                        string? includes = null,
                                        bool ignoreQueryFilters = false);

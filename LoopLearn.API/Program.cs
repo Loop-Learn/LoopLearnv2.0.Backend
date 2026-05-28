@@ -1,6 +1,7 @@
 using LoopLearn.Application.Services.Implementations;
 using LoopLearn.DataAccess.Data;
 using LoopLearn.DataAccess.Implementation;
+using LoopLearn.DataAccess.Services.Enroll;
 using LoopLearn.Entities.Helpers.Models;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
@@ -8,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Stripe;
 using System.Text;
 using System.Text.Json.Serialization;
 
@@ -19,15 +21,19 @@ namespace LoopLearn.API
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // ── Database ──────────────────────────────────────────────────────
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
-                                            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
-        sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)));
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("DefaultConnection"),
+                    sqlOptions => sqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery)
+                ));
 
-            // Repositories
+            // ── Repositories & Services ───────────────────────────────────────
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddScoped<AuthService, AuthService>();
+            builder.Services.AddScoped<EnrollmentService, EnrollmentService>();
 
-            // Services
+            // ── Identity ──────────────────────────────────────────────────────
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 8;
@@ -39,14 +45,18 @@ namespace LoopLearn.API
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
-            // Configuration
+
+            // ── Configuration ─────────────────────────────────────────────────
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var stripeSettings = builder.Configuration.GetSection("Stripe");
 
             builder.Services.Configure<Jwt>(jwtSettings);
             builder.Services.Configure<StripeSettings>(stripeSettings);
 
-            // Authentication
+            // Set Stripe API key once at startup — not on every controller instantiation
+            StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+
+            // ── Authentication ────────────────────────────────────────────────
             var key = Encoding.UTF8.GetBytes(jwtSettings["Key"]);
             builder.Services.AddAuthentication(options =>
             {
@@ -68,38 +78,55 @@ namespace LoopLearn.API
                 };
             });
 
-            // Logging
+            // ── Logging ───────────────────────────────────────────────────────
             builder.Services.AddLogging(config =>
             {
                 config.AddConsole();
                 config.AddDebug();
             });
 
-            // CORS
+            // ── CORS ──────────────────────────────────────────────────────────
             builder.Services.AddCors(options =>
             {
+                // Development: allow all origins for easy local testing
                 options.AddPolicy("AllowAll", policy =>
-                {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyMethod()
-                          .AllowAnyHeader();
-                });
+                    policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
+                // Production: restrict to your actual frontend domain
+                //options.AddPolicy("AllowFrontend", policy =>
+                //    policy.WithOrigins(
+                //              builder.Configuration["AllowedOrigins"]
+                //                  ?? "https://yourdomain.com"
+                //          )
+                //          .AllowAnyMethod()
+                //          .AllowAnyHeader());
             });
 
-            builder.Services.AddControllers();
+            // ── Controllers (one registration, one place) ─────────────────────
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                });
+
             builder.Services.AddSwaggerGen();
 
-            builder.Services.AddControllers()
-               .AddJsonOptions(options =>
-               {
-                   options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-                   options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                   options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
-               });
-
+            // ── Build ─────────────────────────────────────────────────────────
             var app = builder.Build();
 
-            // Seed database
+            // ── Stripe Webhook: preserve raw body before any middleware reads it
+            // Without this, the stream is consumed before EventUtility.ConstructEvent,
+            // causing signature verification to fail.
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api/payment/webhook"))
+                    context.Request.EnableBuffering();
+                await next();
+            });
+
+            // ── Seed Database ─────────────────────────────────────────────────
             using (var scope = app.Services.CreateScope())
             {
                 var services = scope.ServiceProvider;
@@ -118,18 +145,22 @@ namespace LoopLearn.API
                 }
             }
 
-            // Configure the HTTP request pipeline
+            // ── Middleware Pipeline ───────────────────────────────────────────
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
+                app.UseCors("AllowAll");
             }
+            else
+            {
+                app.UseCors("AllowFrontend");
+            }
+
             app.UseStaticFiles();
             app.UseHttpsRedirection();
-            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
-
             app.MapControllers();
 
             app.Run();
