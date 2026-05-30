@@ -2,7 +2,7 @@
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 
-namespace LoopLearn.DataAccess.Services.Enroll
+namespace LoopLearn.API.Services.Enroll
 {
     public class EnrollmentService
     {

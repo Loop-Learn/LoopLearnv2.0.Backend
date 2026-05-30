@@ -1,5 +1,5 @@
 ﻿using LoopLearn.Application.DTOs.Auth;
-using LoopLearn.Application.Services.Implementations;
+using LoopLearn.API.Services.Auth;
 using LoopLearn.Entities.Helpers.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

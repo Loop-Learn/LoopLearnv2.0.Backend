@@ -11,7 +11,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace LoopLearn.Application.Services.Implementations
+namespace LoopLearn.API.Services.Auth
 {
     public class AuthService
     {
