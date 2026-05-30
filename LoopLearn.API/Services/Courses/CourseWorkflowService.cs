@@ -1,6 +1,6 @@
 ﻿using LoopLearn.Entities.Enums;
 
-namespace LoopLearn.DataAccess.Services.Course
+namespace LoopLearn.API.Services.Courses
 {
     public class CourseWorkflowService
     {

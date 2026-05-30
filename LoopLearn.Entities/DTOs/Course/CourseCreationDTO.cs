@@ -12,7 +12,7 @@ namespace LoopLearn.Entities.DTOs.Course
         [Required]
         public int CategoryId { get; set; }
         [Required]
-        public string CategoryName { get; set; }
+        public string Category { get; set; }
     }
     public class LessonCreationDTO
     {

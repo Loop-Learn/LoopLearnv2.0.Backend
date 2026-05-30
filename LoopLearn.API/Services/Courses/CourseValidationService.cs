@@ -1,7 +1,7 @@
 ﻿using LoopLearn.Entities.Helpers.Models;
 using LoopLearn.Entities.Interfaces;
 
-namespace LoopLearn.DataAccess.Services.Course
+namespace LoopLearn.API.Services.Courses
 {
     public class CourseValidationService
     {

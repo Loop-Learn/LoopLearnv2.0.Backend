@@ -1,4 +1,4 @@
-﻿using LoopLearn.DataAccess.Services.Course;
+﻿using LoopLearn.API.Services.Courses;
 using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
