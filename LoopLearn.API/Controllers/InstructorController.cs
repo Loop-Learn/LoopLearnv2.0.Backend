@@ -28,49 +28,6 @@ namespace LoopLearn.API.Controllers
                                       ?? throw new UnauthorizedAccessException();
 
         // =============================================
-        // GET /api/instructor/courses/{id}/submission-check
-        // Lets an instructor check if a course is ready before submitting.
-        // Returns { isReady, errors[] } without changing any state.
-        // =============================================
-        [HttpGet("courses/{id:int}/submission-check")]
-        public async Task<IActionResult> SubmissionCheck(int id)
-        {
-            try
-            {
-                var instructorId = GetUserId();
-
-                var course = await _unitOfWork.Courses
-                    .GetFirstOrDefaultAsync(c => c.Id == id);
-
-                if (course is null || course.IsDeleted)
-                    return NotFound(new { success = false, message = "Course not found." });
-
-                if (course.InstructorId != instructorId)
-                    return Forbid();
-
-                var validation = await _validationService.ValidateForSubmissionAsync(id);
-
-                return Ok(new
-                {
-                    success = true,
-                    data = new SubmissionCheckDTO
-                    {
-                        IsReady = validation.IsReady,
-                        Errors = validation.Errors
-                    }
-                });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized(new { success = false, message = "Invalid token." });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new { success = false, message = e.Message });
-            }
-        }
-
-        // =============================================
         // POST /api/instructor/courses/{id}/submit-review
         // Submits a Draft or Rejected course for admin review.
         // Validates content, transitions status to PendingReview,

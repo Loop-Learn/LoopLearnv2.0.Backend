@@ -33,19 +33,19 @@ namespace LoopLearn.API.Controllers
             }
             catch (ArgumentNullException e)
             {
-                return BadRequest(new {Message = e.Message});
+                return BadRequest(new {Message = e.Message , isAuthenticated = false});
             }
             catch (ValidationException e)
             {
-                return BadRequest(new { Message = e.Message });
+                return BadRequest(new { Message = e.Message, isAuthenticated = false });
             }
             catch (UnauthorizedException e)
             {
-                return Unauthorized(new { Message = e.Message });
+                return Unauthorized(new { Message = e.Message, isAuthenticated = false });
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError,new { Message = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError,new { Message = e.Message, isAuthenticated = false });
             }
         }
         [HttpPost("register")]
@@ -65,19 +65,19 @@ namespace LoopLearn.API.Controllers
             }
             catch (ArgumentNullException e)
             {
-                return BadRequest(new { Message = e.Message });
+                return BadRequest(new { Message = e.Message, isAuthenticated = false });
             }
             catch (ValidationException e)
             {
-                return BadRequest(new { Message = e.Message });
+                return BadRequest(new { Message = e.Message, isAuthenticated = false });
             }
             catch (UnauthorizedException e)
             {
-                return Unauthorized(new { Message = e.Message });
+                return Unauthorized(new { Message = e.Message, isAuthenticated = false });
             }
             catch (Exception e)
             {
-                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = e.Message });
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = e.Message, isAuthenticated = false });
             }
         }
     }
