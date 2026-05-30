@@ -4,25 +4,28 @@ using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace LoopLearn.API.Controllers
 {
 	[Route("api/instructor")]
-	[ApiController]
-	[Authorize(Roles = "Instructor,Admin,SuperAdmin")]
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
 	[Produces("application/json")]
 	[Consumes("application/json")]
-	public class InstructorController : ControllerBase
-	{
-		private readonly IUnitOfWork _unitOfWork;
+    public class InstructorController : ControllerBase
+    {
+        private readonly IUnitOfWork _unitOfWork;
 		private readonly CourseUpdateService _courseUpdateService;
 
 		public InstructorController(IUnitOfWork unitOfWork, CourseUpdateService courseUpdateService)
-		{
-			_unitOfWork = unitOfWork;
+        {
+            _unitOfWork = unitOfWork;
 			_courseUpdateService = courseUpdateService;
-		}
+        }
 
 		private string GetUserId()
 		{
@@ -32,15 +35,15 @@ namespace LoopLearn.API.Controllers
 			return userId;
 		}
 
-		// =============================================
+        // =============================================
 		// GET /api/instructor/courses
-		// =============================================
+        // =============================================
 		[HttpGet("courses")]
 		public async Task<IActionResult> GetMyCourses()
-		{
-			try
-			{
-				var instructorId = GetUserId();
+        {
+            try
+            {
+                var instructorId = GetUserId();
 
 				var courses = await _unitOfWork.Courses.GetAsync(
 					predicate: c => c.InstructorId == instructorId,
@@ -87,9 +90,9 @@ namespace LoopLearn.API.Controllers
 				var instructorId = GetUserId();
 
 				if (!ModelState.IsValid)
-					return BadRequest(new
-					{
-						success = false,
+                    return BadRequest(new
+                    {
+                        success = false,
 						message = "Invalid course data.",
 						errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
 					});
@@ -135,7 +138,7 @@ namespace LoopLearn.API.Controllers
 						category = category.Name,
 						status = course.Status.ToString()
 					}
-				});
+                    });
 			}
 			catch (UnauthorizedAccessException)
 			{
@@ -169,63 +172,63 @@ namespace LoopLearn.API.Controllers
 					return Forbid();
 
 				if (course.Status != CourseStatus.Draft && course.Status != CourseStatus.Rejected)
-					return BadRequest(new
-					{
-						success = false,
+                    return BadRequest(new
+                    {
+                        success = false,
 						message = "Only Draft or Rejected courses can be edited."
-					});
+                    });
 
 				await using var transaction = await _unitOfWork.BeginTransactionAsync();
 
 				try
-				{
+                {
 					await _courseUpdateService.UpdateCourseDataAsync(course, model);
 
 					_unitOfWork.Courses.Update(course);
-					await _unitOfWork.SaveAsync();
+                await _unitOfWork.SaveAsync();
 					await transaction.CommitAsync();
 
-					return Ok(new
-					{
-						success = true,
+                return Ok(new
+                {
+                    success = true,
 						message = "Course saved successfully.",
 						data = new { id = course.Id, status = course.Status.ToString() }
-					});
-				}
+                });
+            }
 				catch
 				{
 					await transaction.RollbackAsync();
 					throw;
 				}
 			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
 
-		// =============================================
+        // =============================================
 		// DELETE /api/instructor/courses/{courseId}
-		// =============================================
+        // =============================================
 		[HttpDelete("courses/{courseId:int}")]
 		public async Task<IActionResult> DeleteCourse(int courseId)
-		{
-			try
-			{
-				var instructorId = GetUserId();
+        {
+            try
+            {
+                var instructorId = GetUserId();
 
-				var course = await _unitOfWork.Courses
+                var course = await _unitOfWork.Courses
 					.GetFirstOrDefaultAsync(c => c.Id == courseId);
 
 				if (course is null)
-					return NotFound(new { success = false, message = "Course not found." });
+                    return NotFound(new { success = false, message = "Course not found." });
 
-				if (course.InstructorId != instructorId)
-					return Forbid();
+                if (course.InstructorId != instructorId)
+                    return Forbid();
 
 				var hasActiveEnrollments = await _unitOfWork.Enrollments
 					.ExistsAsync(
@@ -235,7 +238,7 @@ namespace LoopLearn.API.Controllers
 
 				if (hasActiveEnrollments)
 					return BadRequest(new
-					{
+                        {
 						success = false,
 						message = "Cannot delete a course with active enrollments."
 					});
@@ -246,15 +249,15 @@ namespace LoopLearn.API.Controllers
 				await _unitOfWork.SaveAsync();
 
 				return Ok(new { success = true, message = "Course deleted successfully." });
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
-	}
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
+    }
 }

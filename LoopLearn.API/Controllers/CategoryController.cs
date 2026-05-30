@@ -28,7 +28,7 @@ namespace LoopLearn.API.Controllers
                 if (categories == null)
                     return NotFound(new
                     {
-                        sucess = false,
+                        success = false,
                         message = "No Categories Found."
                     });
 

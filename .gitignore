@@ -11,3 +11,6 @@ LoopLearn.API/bin
 LoopLearn.API/obj
 LoopLearn.API/wwwroot/avatars
 LoopLearn.API/wwwroot/course-thumbnails
+Stripe.CLI/skills-lock.json
+Stripe.CLI/.agents
+Stripe.CLI/stripe-cli-1.42.0

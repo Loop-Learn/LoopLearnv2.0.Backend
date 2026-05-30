@@ -3,7 +3,7 @@
     public enum CourseStatus
     {
         Draft,
-        Pending,
+        PendingReview,
         Published,
         Archived,
         Rejected
