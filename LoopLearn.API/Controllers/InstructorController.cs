@@ -81,10 +81,54 @@ namespace LoopLearn.API.Controllers
 			}
 		}
 
+        // =============================================
+        // GET /api/instructor/courses/id
+        // =============================================
+        [HttpGet("courses/{courseId}")]
+        public async Task<IActionResult> GetCoursesById(int courseId)
+        {
+            try
+            {
+                if (courseId < 1)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = $"Validation error for course ID {courseId}."
+                    });
+                }
+
+                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId,
+                             "Category,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
+
+                if (course is null)
+                {
+                    return NotFound($"Course with ID {courseId} not found.");
+                }
+
+                var courseDetail = MapToCourseDetailDTO(course);
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Course details retrieved successfully.",
+                    data = courseDetail
+                });
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                new
+                {
+                    success = false,
+                    message = "An unexpected error occurred while retrieving courses."
+                });
+            }
+        }
+        
 		// =============================================
-		// POST /api/instructor/courses
-		// =============================================
-		[HttpPost("courses")]
+        // POST /api/instructor/courses
+        // =============================================
+        [HttpPost("courses")]
 		public async Task<IActionResult> CreateCourse([FromBody] CourseCreationDTO model)
 		{
 			try
@@ -311,7 +355,7 @@ namespace LoopLearn.API.Controllers
 				await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
 				{
 					CourseId = course.Id,
-					Action = CourseReviewAction.Submitted,
+					Action = CourseStatus.Submitted,
 					Comment = null,
 					PerformedById = instructorId,
 					PerformedAt = DateTime.UtcNow
@@ -380,7 +424,78 @@ namespace LoopLearn.API.Controllers
 				return StatusCode(500, new { success = false, message = e.Message });
 			}
 		}
-	}
+
+
+        #region Helper Methods
+        private CourseDetailDTO MapToCourseDetailDTO(Course course)
+        {
+            return new ()
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Subtitle = course.Subtitle,
+                Description = course.Description,
+                ThumbnailUrl = course.ThumbnailUrl,
+                Price = course.Price,
+                IsFree = course.IsFree,
+                Level = course.Level.ToString(),
+                Language = course.Language,
+                CreatedAt = course.CreatedAt,
+                UpdatedAt = course.UpdatedAt,
+                InstructorId = course.InstructorId,
+                InstructorName = course.Instructor != null ? $"{course.Instructor.FullName}" : "Unknown",
+                CategoryName = course.Category?.Name,
+                SectionCount = course.Sections?.Count ?? 0,
+                Tags = course.CourseTags?.Select(ct => ct.Tag?.Name).Where(t => t != null).ToList() ?? new(),
+                Requirements = course.Requirements?.Select(r => r.Description).ToList() ?? new(),
+                LearningOutcomes = course.LearningOutcomes?.Select(lo => lo.Description).ToList() ?? new(),
+                Sections = MapToSectionsDTOs(course.Sections),
+            };
+        }
+        private List<SectionsDTO> MapToSectionsDTOs(ICollection<Section> sections)
+        {
+            if (sections is null || !sections.Any())
+                return new();
+
+            return sections.Select(s => new SectionsDTO
+            {
+                Id = s.Id,
+                Title = s.Title,
+                Order = s.Order,
+                Lessons = MapToLessonsDTOs(s.Lessons),
+                Quizzes = MapToQuizzesDTOs(s.Quizzes)
+            }).OrderBy(s => s.Order).ToList();
+        }
+        private List<LessonDTO> MapToLessonsDTOs(ICollection<Lesson> lessons)
+        {
+            if (lessons is null || !lessons.Any())
+                return new();
+
+            return lessons.Select(l => new LessonDTO
+            {
+                Id = l.Id,
+                Title = l.Title,
+                VideoURL = l.IsPreview ? l.VideoUrl : "",
+                Order = l.Order,
+                Duration = l.Duration,
+                isPreview = l.IsPreview
+            }).OrderBy(l => l.Order).ToList();
+        }
+        private List<QuizDTO> MapToQuizzesDTOs(ICollection<Quiz> quizzes)
+        {
+            if (quizzes is null || !quizzes.Any())
+                return new();
+
+            return quizzes.Select(q => new QuizDTO
+            {
+                Id = q.Id,
+                QuizTitle = q.Title,
+                Description = q.Description
+            }).ToList();
+        }
+        #endregion
+
+    }
 
 
 

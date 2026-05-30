@@ -9,7 +9,7 @@ namespace LoopLearn.Entities.Models
         public int CourseId { get; set; }
         public Course Course { get; set; }
 
-        public CourseReviewAction Action { get; set; }
+        public CourseStatus Action { get; set; }
 
         // Required for Rejected; optional for Approved/Submitted
         public string? Comment { get; set; }

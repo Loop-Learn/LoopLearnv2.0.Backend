@@ -102,7 +102,7 @@ namespace LoopLearn.API.Controllers
                 await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
                 {
                     CourseId = course.Id,
-                    Action = CourseReviewAction.Approved,
+                    Action = CourseStatus.Approved,
                     Comment = null,
                     PerformedById = adminId,
                     PerformedAt = DateTime.UtcNow
@@ -159,7 +159,7 @@ namespace LoopLearn.API.Controllers
                 await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
                 {
                     CourseId = course.Id,
-                    Action = CourseReviewAction.Rejected,
+                    Action = CourseStatus.Rejected,
                     Comment = model.Comment,
                     PerformedById = adminId,
                     PerformedAt = DateTime.UtcNow

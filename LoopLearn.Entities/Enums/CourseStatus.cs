@@ -6,6 +6,8 @@
         PendingReview,
         Published,
         Archived,
-        Rejected
+        Rejected,
+        Submitted,   // Instructor submitted for review
+        Approved,   // Admin approved → Published
     }
 }
