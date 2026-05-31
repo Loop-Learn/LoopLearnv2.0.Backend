@@ -1,17 +1,11 @@
-﻿using LoopLearn.DataAccess.Implementation;
-using LoopLearn.Entities.DTOs.Course;
-using LoopLearn.Entities.DTOs.Users;
+﻿using LoopLearn.Entities.DTOs.Users;
 using LoopLearn.Entities.Helpers.CustomValidations;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Linq.Expressions;
 using System.Security.Claims;
-using System.Threading.Tasks;
-//using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace LoopLearn.API.Controllers
 {
@@ -22,10 +16,12 @@ namespace LoopLearn.API.Controllers
 	{
 		private readonly IUnitOfWork _unitOfWork;
 		private readonly UserManager<ApplicationUser> _userManager;
-		public ProfileController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager)
+        private readonly IWebHostEnvironment _env;
+        public ProfileController(IUnitOfWork unitOfWork, UserManager<ApplicationUser> userManager, IWebHostEnvironment env)
 		{
 			_unitOfWork = unitOfWork;
 			_userManager = userManager;
+			_env = env;
 		}
 
 		[HttpGet()]
@@ -256,44 +252,105 @@ namespace LoopLearn.API.Controllers
         [HttpPut("update/avatar")]
         public async Task<IActionResult> ChangeAvatar(string profileImageUrl)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var studentId = GetUserId();
-            var user = await _userManager.FindByIdAsync(studentId);
-            if (user is null)
-                return NotFound(new
-                {
-                    success = false,
-                    message = $"Student with ID {studentId} not found."
-                });
-            if (!(new AvatarUrlAttribute().IsValid(profileImageUrl)))
-                return BadRequest(new
-                {
-                    success = false,
-                    message = $"ImageUrl {profileImageUrl} not Valid."
-                });
-            user.ProfileImageUrl = profileImageUrl;
+			try
+			{
+				if (!ModelState.IsValid)
+					return BadRequest(ModelState);
 
-            var result = await _userManager.UpdateAsync(user);
-            if (!result.Succeeded)
+				var studentId = GetUserId();
+				var user = await _userManager.FindByIdAsync(studentId);
+				if (user is null)
+					return NotFound(new
+					{
+						success = false,
+						message = $"Student with ID {studentId} not found."
+					});
+
+				if (!(new AvatarUrlAttribute().IsValid(profileImageUrl)))
+					return BadRequest(new
+					{
+						success = false,
+						message = $"ImageUrl {profileImageUrl} not Valid."
+					});
+
+				if (!string.Equals(user.ProfileImageUrl, profileImageUrl, StringComparison.OrdinalIgnoreCase))
+				{
+					// Delete the old avatar file if it exists and is a local file
+					await DeleteOldAvatarFileAsync(user.ProfileImageUrl);
+				}
+
+				user.ProfileImageUrl = profileImageUrl;
+
+				var result = await _userManager.UpdateAsync(user);
+				if (!result.Succeeded)
+				{
+					return StatusCode(StatusCodes.Status500InternalServerError,
+					new
+					{
+						success = false,
+						message = "Failed to update profile Image.",
+						errors = result.Errors.Select(e => e.Description)
+					});
+				}
+
+				user = await _userManager.FindByIdAsync(studentId);
+				var profileDTO = MapToProfileDTO(user);
+
+				return Ok(new
+				{
+					success = true,
+					message = "Update Profile image successfully.",
+					data = profileDTO
+				});
+			}
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new
+                {
+                    success = false,
+                    message = "Invalid Token."
+                });
+            }
+            catch (Exception)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                 new
                 {
                     success = false,
-                    message = "Failed to update profile Image.",
-                    errors = result.Errors.Select(e => e.Description)
+                    message = "An error occurred while updating profile"
                 });
             }
-            user = await _userManager.FindByIdAsync(studentId);
-            var profileDTO = MapToProfileDTO(user);
-            return Ok(new
-            {
-                success = true,
-                message = "Update Profile image successfully.",
-                data = profileDTO
-            });
         }
         #region Helper Methods
+        private async Task DeleteOldAvatarFileAsync(string imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return;
+
+            try
+            {
+                // Only delete if it's a local file (not an external URL)
+                if (!Uri.IsWellFormedUriString(imageUrl, UriKind.Absolute))
+                    return;
+
+                var uri = new Uri(imageUrl);
+                // Only delete if host matches your application (optional security)
+                // if (uri.Host != Request.Host.Host) return;
+
+                // Get the relative path from the URL (e.g., "/uploads/avatars/xxx.jpg")
+                var relativePath = uri.LocalPath.TrimStart('/');
+                var physicalPath = Path.Combine(_env.WebRootPath, relativePath);
+
+                if (System.IO.File.Exists(physicalPath))
+                {
+                    await Task.Run(() => System.IO.File.Delete(physicalPath));
+                }
+            }
+            catch (Exception)
+            {
+				throw;
+            }
+        }
         private ProfileDTO MapToProfileDTO(ApplicationUser user) => new ProfileDTO
 		{
 			Avatar = user.ProfileImageUrl,

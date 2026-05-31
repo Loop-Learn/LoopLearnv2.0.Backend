@@ -320,7 +320,7 @@ namespace LoopLearn.DataAccess.Data
 				Gender = Gender.Female,
 				CreatedAt = DateTime.UtcNow
 			},
-			Password = "Admin1@",
+			Password = "Asdiop00@",
 			Role = "Admin"
 		}
 	};

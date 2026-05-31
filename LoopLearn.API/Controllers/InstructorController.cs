@@ -4,82 +4,80 @@ using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 
 namespace LoopLearn.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
     [Authorize(Roles = "Instructor,Admin,SuperAdmin")]
-	[Produces("application/json")]
-	[Consumes("application/json")]
+    [Produces("application/json")]
+    [Consumes("application/json")]
     public class InstructorController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-		private readonly CourseUpdateService _courseUpdateService;
-		private readonly CourseValidationService _validationService;
+        private readonly CourseUpdateService _courseUpdateService;
+        private readonly CourseValidationService _validationService;
 
 
-		public InstructorController(IUnitOfWork unitOfWork, CourseUpdateService courseUpdateService, CourseValidationService courseValidationService)
+        public InstructorController(IUnitOfWork unitOfWork, CourseUpdateService courseUpdateService, CourseValidationService courseValidationService)
         {
             _unitOfWork = unitOfWork;
-			_courseUpdateService = courseUpdateService;
-			_validationService = courseValidationService;
+            _courseUpdateService = courseUpdateService;
+            _validationService = courseValidationService;
         }
 
-		private string GetUserId()
-		{
-			var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-			if (string.IsNullOrEmpty(userId))
-				throw new UnauthorizedAccessException();
-			return userId;
-		}
+        private string GetUserId()
+        {
+            var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+                throw new UnauthorizedAccessException();
+            return userId;
+        }
 
         // =============================================
-		// GET /api/instructor/courses
+        // GET /api/instructor/courses
         // =============================================
-		[HttpGet("courses")]
-		public async Task<IActionResult> GetMyCourses()
+        [HttpGet("courses")]
+        public async Task<IActionResult> GetMyCourses()
         {
             try
             {
                 var instructorId = GetUserId();
 
-				var courses = await _unitOfWork.Courses.GetAsync(
-					predicate: c => c.InstructorId == instructorId,
-					selector: c => new InstructorCourseDTO
-					{
-						Id = c.Id,
-						Title = c.Title,
-						Subtitle = c.Subtitle,
-						ThumbnailUrl = c.ThumbnailUrl,
-						Price = c.Price,
-						IsFree = c.IsFree,
-						Status = c.Status.ToString(),
-						Level = c.Level.ToString(),
-						CreatedAt = c.CreatedAt,
-						UpdatedAt = c.UpdatedAt,
-						EnrollmentCount = c.Enrollments != null ? c.Enrollments.Count : 0,
-						AverageRating = c.Feedbacks != null && c.Feedbacks.Any()
-										? Math.Round(c.Feedbacks.Average(f => (double)f.Rating), 1)
-										: 0.0
-					},
-					include: "Enrollments,Feedbacks"
-				);
+                var courses = await _unitOfWork.Courses.GetAsync(
+                    predicate: c => c.InstructorId == instructorId,
+                    selector: c => new InstructorCourseDTO
+                    {
+                        Id = c.Id,
+                        Title = c.Title,
+                        Subtitle = c.Subtitle,
+                        ThumbnailUrl = c.ThumbnailUrl,
+                        Price = c.Price,
+                        IsFree = c.IsFree,
+                        Status = c.Status.ToString(),
+                        Level = c.Level.ToString(),
+                        CreatedAt = c.CreatedAt,
+                        UpdatedAt = c.UpdatedAt,
+                        EnrollmentCount = c.Enrollments != null ? c.Enrollments.Count : 0,
+                        AverageRating = c.Feedbacks != null && c.Feedbacks.Any()
+                                        ? Math.Round(c.Feedbacks.Average(f => (double)f.Rating), 1)
+                                        : 0.0
+                    },
+                    include: "Enrollments,Feedbacks"
+                );
 
-				return Ok(new { success = true, data = courses });
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
+                return Ok(new { success = true, data = courses });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
 
         // =============================================
         // GET /api/instructor/courses/id
@@ -99,7 +97,7 @@ namespace LoopLearn.API.Controllers
                 }
 
                 var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId,
-                             "Category,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
+                             "Category,Instructor,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
 
                 if (course is null)
                 {
@@ -124,129 +122,68 @@ namespace LoopLearn.API.Controllers
                 });
             }
         }
-        
-		// =============================================
+
+        // =============================================
         // POST /api/instructor/courses
         // =============================================
         [HttpPost("courses")]
-		public async Task<IActionResult> CreateCourse([FromBody] CourseCreationDTO model)
-		{
-			try
-			{
-				var instructorId = GetUserId();
+        public async Task<IActionResult> CreateCourse([FromBody] CourseCreationDTO model)
+        {
+            try
+            {
+                var instructorId = GetUserId();
 
-				if (!ModelState.IsValid)
+                if (!ModelState.IsValid)
                     return BadRequest(new
                     {
                         success = false,
-						message = "Invalid course data.",
-						errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-					});
-
-				var category = await _unitOfWork.Categories
-					.GetFirstOrDefaultAsync(c => c.Name == model.Category);
-
-				if (category is null)
-					return NotFound(new
-					{
-						success = false,
-						message = $"Category '{model.Category}' not found."
-					});
-
-				var course = new Course
-				{
-					Title = model.Title,
-					CategoryId = category.Id,
-					InstructorId = instructorId,
-					Status = CourseStatus.Draft,
-					CreatedAt = DateTime.UtcNow,
-					UpdatedAt = DateTime.UtcNow,
-					ThumbnailUrl = "",
-					Level = CourseLevel.Beginner,
-					IsFree = false,
-					Price = 0,
-					Subtitle = "",
-					Description = "",
-					Language = "en"
-				};
-
-				await _unitOfWork.Courses.AddAsync(course);
-				await _unitOfWork.SaveAsync();
-
-				return StatusCode(201, new
-				{
-					success = true,
-					message = "Course created successfully.",
-					data = new
-					{
-						id = course.Id,
-						title = course.Title,
-						category = category.Name,
-						status = course.Status.ToString()
-					}
+                        message = "Invalid course data.",
+                        errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                     });
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
 
-		// =============================================
-		// PUT /api/instructor/courses/{courseId}
-		// =============================================
-		[HttpPut("courses/{courseId:int}")]
-		public async Task<IActionResult> UpdateCourse(int courseId, [FromBody] UpdateCourseDTO model)
-		{
-			try
-			{
-				var instructorId = GetUserId();
+                var category = await _unitOfWork.Categories
+                    .GetFirstOrDefaultAsync(c => c.Name == model.Category);
 
-				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
-					c => c.Id == courseId,
-					includes: "Requirements,LearningOutcomes,TargetAudiences,CourseTags,Sections,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options"
-				);
-
-				if (course is null)
-					return NotFound(new { success = false, message = "Course not found." });
-
-				if (course.InstructorId != instructorId)
-					return Forbid();
-
-				if (course.Status != CourseStatus.Draft && course.Status != CourseStatus.Rejected)
-                    return BadRequest(new
+                if (category is null)
+                    return NotFound(new
                     {
                         success = false,
-						message = "Only Draft or Rejected courses can be edited."
+                        message = $"Category '{model.Category}' not found."
                     });
 
-				await using var transaction = await _unitOfWork.BeginTransactionAsync();
-
-				try
+                var course = new Course
                 {
-					await _courseUpdateService.UpdateCourseDataAsync(course, model);
+                    Title = model.Title,
+                    CategoryId = category.Id,
+                    InstructorId = instructorId,
+                    Status = CourseStatus.Draft,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    ThumbnailUrl = "",
+                    Level = CourseLevel.Beginner,
+                    IsFree = false,
+                    Price = 0,
+                    Subtitle = "",
+                    Description = "",
+                    Language = "en"
+                };
 
-					_unitOfWork.Courses.Update(course);
+                await _unitOfWork.Courses.AddAsync(course);
                 await _unitOfWork.SaveAsync();
-					await transaction.CommitAsync();
 
-                return Ok(new
+                return StatusCode(201, new
                 {
                     success = true,
-						message = "Course saved successfully.",
-						data = new { id = course.Id, status = course.Status.ToString() }
+                    message = "Course created successfully.",
+                    data = new
+                    {
+                        id = course.Id,
+                        title = course.Title,
+                        category = category.Name,
+                        status = course.Status.ToString()
+                    }
                 });
             }
-				catch
-				{
-					await transaction.RollbackAsync();
-					throw;
-				}
-			}
             catch (UnauthorizedAccessException)
             {
                 return Unauthorized(new { success = false, message = "Invalid token." });
@@ -258,43 +195,104 @@ namespace LoopLearn.API.Controllers
         }
 
         // =============================================
-		// DELETE /api/instructor/courses/{courseId}
+        // PUT /api/instructor/courses/{courseId}
         // =============================================
-		[HttpDelete("courses/{courseId:int}")]
-		public async Task<IActionResult> DeleteCourse(int courseId)
+        [HttpPut("courses/{courseId:int}")]
+        public async Task<IActionResult> UpdateCourse(int courseId, [FromBody] UpdateCourseDTO model)
+        {
+            try
+            {
+                var instructorId = GetUserId();
+
+                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
+                    c => c.Id == courseId,
+                    includes: "Requirements,LearningOutcomes,TargetAudiences,CourseTags,Sections,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options"
+                );
+
+                if (course is null)
+                    return NotFound(new { success = false, message = "Course not found." });
+
+                if (course.InstructorId != instructorId)
+                    return Forbid();
+
+                if (course.Status != CourseStatus.Draft && course.Status != CourseStatus.Rejected)
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Only Draft or Rejected courses can be edited."
+                    });
+
+                await using var transaction = await _unitOfWork.BeginTransactionAsync();
+
+                try
+                {
+                    await _courseUpdateService.UpdateCourseDataAsync(course, model);
+
+                    _unitOfWork.Courses.Update(course);
+                    await _unitOfWork.SaveAsync();
+                    await transaction.CommitAsync();
+
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "Course saved successfully.",
+                        data = new { id = course.Id, status = course.Status.ToString() }
+                    });
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
+
+        // =============================================
+        // DELETE /api/instructor/courses/{courseId}
+        // =============================================
+        [HttpDelete("courses/{courseId:int}")]
+        public async Task<IActionResult> DeleteCourse(int courseId)
         {
             try
             {
                 var instructorId = GetUserId();
 
                 var course = await _unitOfWork.Courses
-					.GetFirstOrDefaultAsync(c => c.Id == courseId);
+                    .GetFirstOrDefaultAsync(c => c.Id == courseId);
 
-				if (course is null)
+                if (course is null)
                     return NotFound(new { success = false, message = "Course not found." });
 
                 if (course.InstructorId != instructorId)
                     return Forbid();
 
-				var hasActiveEnrollments = await _unitOfWork.Enrollments
-					.ExistsAsync(
-						e => e.CourseId == courseId && e.Status == EnrollmentStatus.Active,
-						ignoreQueryFilters: true
-					);
+                var hasActiveEnrollments = await _unitOfWork.Enrollments
+                    .ExistsAsync(
+                        e => e.CourseId == courseId && e.Status == EnrollmentStatus.Active,
+                        ignoreQueryFilters: true
+                    );
 
-				if (hasActiveEnrollments)
-					return BadRequest(new
-                        {
-						success = false,
-						message = "Cannot delete a course with active enrollments."
-					});
+                if (hasActiveEnrollments)
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Cannot delete a course with active enrollments."
+                    });
 
-				course.IsDeleted = true;
-				course.DeletedAt = DateTime.UtcNow;
-				_unitOfWork.Courses.Update(course);
-				await _unitOfWork.SaveAsync();
+                course.IsDeleted = true;
+                course.DeletedAt = DateTime.UtcNow;
+                _unitOfWork.Courses.Update(course);
+                await _unitOfWork.SaveAsync();
 
-				return Ok(new { success = true, message = "Course deleted successfully." });
+                return Ok(new { success = true, message = "Course deleted successfully." });
             }
             catch (UnauthorizedAccessException)
             {
@@ -306,130 +304,130 @@ namespace LoopLearn.API.Controllers
             }
         }
 
-		// =============================================
-		// POST /api/instructor/courses/{id}/submit-review
-		// =============================================
-		[HttpPost("courses/{id:int}/submit-review")]
-		public async Task<IActionResult> SubmitForReview(int id)
-		{
-			try
-			{
-				var instructorId = GetUserId();
+        // =============================================
+        // POST /api/instructor/courses/{id}/submit-review
+        // =============================================
+        [HttpPost("courses/{id:int}/submit-review")]
+        public async Task<IActionResult> SubmitForReview(int id)
+        {
+            try
+            {
+                var instructorId = GetUserId();
 
-				var course = await _unitOfWork.Courses
-					.GetFirstOrDefaultAsync(c => c.Id == id);
+                var course = await _unitOfWork.Courses
+                    .GetFirstOrDefaultAsync(c => c.Id == id);
 
-				if (course is null || course.IsDeleted)
-					return NotFound(new { success = false, message = "Course not found." });
+                if (course is null || course.IsDeleted)
+                    return NotFound(new { success = false, message = "Course not found." });
 
-				// Ownership check
-				if (course.InstructorId != instructorId)
-					return Forbid();
+                // Ownership check
+                if (course.InstructorId != instructorId)
+                    return Forbid();
 
-				// Workflow guard — only Draft or Rejected can be submitted
-				if (!CourseWorkflowService.CanSubmitForReview(course.Status))
-					return BadRequest(new
-					{
-						success = false,
-						message = $"Cannot submit a course with status '{course.Status}'. " +
-								  $"Only Draft or Rejected courses can be submitted for review."
-					});
+                // Workflow guard — only Draft or Rejected can be submitted
+                if (!CourseWorkflowService.CanSubmitForReview(course.Status))
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = $"Cannot submit a course with status '{course.Status}'. " +
+                                  $"Only Draft or Rejected courses can be submitted for review."
+                    });
 
-				// Content validation
-				var validation = await _validationService.ValidateForSubmissionAsync(id);
-				if (!validation.IsReady)
-					return BadRequest(new
-					{
-						success = false,
-						message = "Course is not ready for submission.",
-						errors = validation.Errors
-					});
+                // Content validation
+                var validation = await _validationService.ValidateForSubmissionAsync(id);
+                if (!validation.IsReady)
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Course is not ready for submission.",
+                        errors = validation.Errors
+                    });
 
-				// Transition
-				course.Status = CourseStatus.PendingReview;
-				course.SubmittedForReviewAt = DateTime.UtcNow;
-				course.UpdatedAt = DateTime.UtcNow;
-				_unitOfWork.Courses.Update(course);
+                // Transition
+                course.Status = CourseStatus.PendingReview;
+                course.SubmittedForReviewAt = DateTime.UtcNow;
+                course.UpdatedAt = DateTime.UtcNow;
+                _unitOfWork.Courses.Update(course);
 
-				// Record history
-				await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
-				{
-					CourseId = course.Id,
-					Action = CourseStatus.Submitted,
-					Comment = null,
-					PerformedById = instructorId,
-					PerformedAt = DateTime.UtcNow
-				});
+                // Record history
+                await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
+                {
+                    CourseId = course.Id,
+                    Action = CourseStatus.Submitted,
+                    Comment = null,
+                    PerformedById = instructorId,
+                    PerformedAt = DateTime.UtcNow
+                });
 
-				await _unitOfWork.SaveAsync();
+                await _unitOfWork.SaveAsync();
 
-				return Ok(new
-				{
-					success = true,
-					message = "Course submitted for review successfully. You will be notified once reviewed."
-				});
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
+                return Ok(new
+                {
+                    success = true,
+                    message = "Course submitted for review successfully. You will be notified once reviewed."
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
 
-		// =============================================
-		// GET /api/instructor/courses/{id}/review-history
-		// =============================================
-		[HttpGet("courses/{id:int}/review-history")]
-		public async Task<IActionResult> GetReviewHistory(int id)
-		{
-			try
-			{
-				var instructorId = GetUserId();
+        // =============================================
+        // GET /api/instructor/courses/{id}/review-history
+        // =============================================
+        [HttpGet("courses/{id:int}/review-history")]
+        public async Task<IActionResult> GetReviewHistory(int id)
+        {
+            try
+            {
+                var instructorId = GetUserId();
 
-				var course = await _unitOfWork.Courses
-					.GetFirstOrDefaultAsync(c => c.Id == id);
+                var course = await _unitOfWork.Courses
+                    .GetFirstOrDefaultAsync(c => c.Id == id);
 
-				if (course is null || course.IsDeleted)
-					return NotFound(new { success = false, message = "Course not found." });
+                if (course is null || course.IsDeleted)
+                    return NotFound(new { success = false, message = "Course not found." });
 
-				if (course.InstructorId != instructorId)
-					return Forbid();
+                if (course.InstructorId != instructorId)
+                    return Forbid();
 
-				var history = await _unitOfWork.CourseReviewHistories
-					.GetAsync(
-						predicate: h => h.CourseId == id,
-						selector: h => new CourseReviewHistoryDTO
-						{
-							Id = h.Id,
-							Action = h.Action.ToString(),
-							Comment = h.Comment,
-							PerformedBy = h.PerformedBy.FullName,
-							PerformedAt = h.PerformedAt
-						},
-						include: "PerformedBy",
-						orderBy: q => q.OrderByDescending(h => h.PerformedAt)
-					);
+                var history = await _unitOfWork.CourseReviewHistories
+                    .GetAsync(
+                        predicate: h => h.CourseId == id,
+                        selector: h => new CourseReviewHistoryDTO
+                        {
+                            Id = h.Id,
+                            Action = h.Action.ToString(),
+                            Comment = h.Comment,
+                            PerformedBy = h.PerformedBy.FullName,
+                            PerformedAt = h.PerformedAt
+                        },
+                        include: "PerformedBy",
+                        orderBy: q => q.OrderByDescending(h => h.PerformedAt)
+                    );
 
-				return Ok(new { success = true, data = history });
-			}
-			catch (UnauthorizedAccessException)
-			{
-				return Unauthorized(new { success = false, message = "Invalid token." });
-			}
-			catch (Exception e)
-			{
-				return StatusCode(500, new { success = false, message = e.Message });
-			}
-		}
+                return Ok(new { success = true, data = history });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
 
 
         #region Helper Methods
-        private CourseDetailDTO MapToCourseDetailDTO(Course course)
+        private InstructorCourseDetailDTO MapToCourseDetailDTO(Course course)
         {
-            return new ()
+            return new InstructorCourseDetailDTO
             {
                 Id = course.Id,
                 Title = course.Title,
@@ -442,61 +440,97 @@ namespace LoopLearn.API.Controllers
                 Language = course.Language,
                 CreatedAt = course.CreatedAt,
                 UpdatedAt = course.UpdatedAt,
-                InstructorId = course.InstructorId,
-                InstructorName = course.Instructor != null ? $"{course.Instructor.FullName}" : "Unknown",
-                CategoryName = course.Category?.Name,
-                SectionCount = course.Sections?.Count ?? 0,
+                Category = course.Category?.Name,
                 Tags = course.CourseTags?.Select(ct => ct.Tag?.Name).Where(t => t != null).ToList() ?? new(),
                 Requirements = course.Requirements?.Select(r => r.Description).ToList() ?? new(),
                 LearningOutcomes = course.LearningOutcomes?.Select(lo => lo.Description).ToList() ?? new(),
-                Sections = MapToSectionsDTOs(course.Sections),
+                Sections = MapToSectionDetailDTOs(course.Sections)   // New method
             };
         }
-        private List<SectionsDTO> MapToSectionsDTOs(ICollection<Section> sections)
-        {
-            if (sections is null || !sections.Any())
-                return new();
 
-            return sections.Select(s => new SectionsDTO
+        private List<SectionCreationDTO> MapToSectionDetailDTOs(ICollection<Section> sections)
+        {
+            if (sections == null || !sections.Any())
+                return new List<SectionCreationDTO>();
+
+            return sections.OrderBy(s => s.Order).Select(s => new SectionCreationDTO
             {
                 Id = s.Id,
                 Title = s.Title,
                 Order = s.Order,
-                Lessons = MapToLessonsDTOs(s.Lessons),
-                Quizzes = MapToQuizzesDTOs(s.Quizzes)
-            }).OrderBy(s => s.Order).ToList();
+                Items = BuildSectionItems(s)
+            }).ToList();
         }
-        private List<LessonDTO> MapToLessonsDTOs(ICollection<Lesson> lessons)
+        private List<SectionItemCreationDTO> BuildSectionItems(Section section)
         {
-            if (lessons is null || !lessons.Any())
-                return new();
+            var items = new List<SectionItemCreationDTO>();
 
-            return lessons.Select(l => new LessonDTO
+            // Add lessons
+            if (section.Lessons != null)
             {
-                Id = l.Id,
-                Title = l.Title,
-                VideoURL = l.IsPreview ? l.VideoUrl : "",
-                Order = l.Order,
-                Duration = l.Duration,
-                isPreview = l.IsPreview
-            }).OrderBy(l => l.Order).ToList();
-        }
-        private List<QuizDTO> MapToQuizzesDTOs(ICollection<Quiz> quizzes)
-        {
-            if (quizzes is null || !quizzes.Any())
-                return new();
+                foreach (var lesson in section.Lessons.OrderBy(l => l.Order))
+                {
+                    items.Add(new SectionItemCreationDTO
+                    {
+                        Type = SectionItemType.Lesson,
+                        Lesson = new LessonCreationDTO
+                        {
+                            Id = lesson.Id,
+                            Title = lesson.Title,
+                            Description = lesson.Description,
+                            VideoUrl = lesson.VideoUrl,     // Always return the real URL
+                            Order = lesson.Order,
+                            IsPreview = lesson.IsPreview,
+                            Duration = lesson.Duration
+                        },
+                        Quiz = null
+                    });
+                }
+            }
 
-            return quizzes.Select(q => new QuizDTO
+            // Add quizzes
+            if (section.Quizzes != null)
+            {
+                foreach (var quiz in section.Quizzes)
+                {
+                    items.Add(new SectionItemCreationDTO
+                    {
+                        Type = SectionItemType.Quiz,
+                        Lesson = null,
+                        Quiz = new QuizCreationDTO
+                        {
+                            Id = quiz.Id,
+                            Title = quiz.Title,
+                            Description = quiz.Description,
+                            PassingScore = quiz.PassingScore,
+                            IsRequired = quiz.IsRequired,
+                            Questions = MapToQuestionDetailDTOs(quiz.Questions)
+                        }
+                    });
+                }
+            }
+
+            return items;
+        }
+        private List<QuestionCreationDTO> MapToQuestionDetailDTOs(ICollection<Question> questions)
+        {
+            if (questions == null || !questions.Any())
+                return new List<QuestionCreationDTO>();
+
+            return questions.Select(q => new QuestionCreationDTO
             {
                 Id = q.Id,
-                QuizTitle = q.Title,
-                Description = q.Description
+                Body = q.Body,
+                Points = q.Points,
+                Options = q.Options?.Select(o => new OptionCreationDTO
+                {
+                    Id = o.Id,
+                    Body = o.Body,
+                    IsCorrect = o.IsCorrect
+                }).ToList() ?? new()
             }).ToList();
         }
         #endregion
 
     }
-
-
-
 }
