@@ -44,10 +44,10 @@ namespace LoopLearn.API.Controllers
 
 				var pagedCourses = coursesDTOs.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-				Response.Headers.Add("Total-Count", coursesDTOs.Count().ToString());
-				Response.Headers.Add("Page", page.ToString());
-				Response.Headers.Add("PageSize", pageSize.ToString());
-				Response.Headers.Add("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
+				Response.Headers.Append("Total-Count", coursesDTOs.Count().ToString());
+				Response.Headers.Append("Page", page.ToString());
+				Response.Headers.Append("PageSize", pageSize.ToString());
+				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
 
 				return Ok(new
 				{
@@ -110,10 +110,10 @@ namespace LoopLearn.API.Controllers
 				}
 				var pagedCourses = coursesDTOs.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-				Response.Headers.Add("Total-Count", coursesDTOs.Count().ToString());
-				Response.Headers.Add("Page", page.ToString());
-				Response.Headers.Add("PageSize", pageSize.ToString());
-				Response.Headers.Add("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
+				Response.Headers.Append("Total-Count", coursesDTOs.Count().ToString());
+				Response.Headers.Append("Page", page.ToString());
+				Response.Headers.Append("PageSize", pageSize.ToString());
+				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
 				return Ok(new
 				{
 					success = true,
@@ -189,10 +189,10 @@ namespace LoopLearn.API.Controllers
 
 				var pagedCourses = relevanceCourses.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
-				Response.Headers.Add("Total-Count", coursesCardDTOs.Count().ToString());
-				Response.Headers.Add("Page", page.ToString());
-				Response.Headers.Add("PageSize", pageSize.ToString());
-				Response.Headers.Add("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
+				Response.Headers.Append("Total-Count", coursesCardDTOs.Count().ToString());
+				Response.Headers.Append("Page", page.ToString());
+				Response.Headers.Append("PageSize", pageSize.ToString());
+				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page, PageSize");
 				return Ok(new
 				{
 					success = true,
