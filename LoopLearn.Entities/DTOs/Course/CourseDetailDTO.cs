@@ -1,3 +1,6 @@
+using LoopLearn.Entities.DTOs.Course;
+using LoopLearn.Entities.Enums;
+
 namespace LoopLearn.Entities.DTOs.Course
 {
     public class CourseDetailDTO
@@ -46,4 +49,37 @@ namespace LoopLearn.Entities.DTOs.Course
         public List<SectionsDTO> Sections { get; set; } = new();
         public List<FeedbacksDTO> Feedbacks { get; set; } = new();
     }
+    public class InstructorCourseDetailDTO 
+    {
+        public int Id { get; set; }
+
+        public string Title { get; set; }
+
+        public string Subtitle { get; set; }
+
+        public string Description { get; set; }
+
+        public string ThumbnailUrl { get; set; }
+
+        public decimal Price { get; set; }
+
+        public bool IsFree { get; set; }
+
+        public string Level { get; set; }
+
+        public string Language { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public DateTime UpdatedAt { get; set; }
+
+        public string Category { get; set; }
+
+        public List<string> Tags { get; set; } = new();
+        public List<string> Requirements { get; set; } = new();
+        public List<string> LearningOutcomes { get; set; } = new();
+        public List<SectionCreationDTO> Sections { get; set; } = new();
+        public List<string>? TargetAudiences { get; set; }
+    }
 }
+
