@@ -24,7 +24,7 @@ namespace LoopLearn.API.Controllers
 			_env = env;
 		}
 
-		[HttpGet()]
+		[HttpGet]
 		public async Task<IActionResult> GetProfile()
 		{
 			try

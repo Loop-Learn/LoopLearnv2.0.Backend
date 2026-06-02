@@ -657,7 +657,6 @@ namespace LoopLearn.API.Controllers
                 Sections = MapToSectionDetailDTOs(course.Sections)   // New method
             };
         }
-
         private List<SectionCreationDTO> MapToSectionDetailDTOs(ICollection<Section> sections)
         {
             if (sections == null || !sections.Any())
