@@ -382,7 +382,7 @@ namespace LoopLearn.API.Controllers
                             Status = p.Status.ToString(),
                             CreatedAt = p.CreatedAt
                         },
-                        include: "Course",
+                        includes: "Course",
                         orderBy: q => q.OrderByDescending(p => p.CreatedAt)
                     );
 

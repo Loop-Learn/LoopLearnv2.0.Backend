@@ -149,7 +149,7 @@ namespace LoopLearn.API.Controllers
 										? Math.Round(c.Feedbacks.Average(f => (double)f.Rating), 1)
 										: 0.0
 					},
-					include: "Enrollments,Feedbacks",
+					includes: "Enrollments,Feedbacks",
 					orderBy: q => q.OrderByDescending(c => c.CreatedAt)
 				);
 
@@ -166,7 +166,10 @@ namespace LoopLearn.API.Controllers
 					.ToList();
 
 				// Stats 
-				var totalCourses = courses.Count();
+				var totalCourses = await _unitOfWork.Courses.GetAllAsync(predicate: c => c.Status == CourseStatus.Published);
+                var coursesCount = totalCourses.Count();
+
+				var totalCount = courses.Count();
 
 				var totalEnrollments = courses.Sum(c => c.EnrollmentCount);
 
@@ -185,13 +188,14 @@ namespace LoopLearn.API.Controllers
 				var totalRevenue = payments.Sum();
 
 				// Header metadata
-				Response.Headers.Append("Total-Count", totalCourses.ToString());
+				Response.Headers.Append("Total-Courses", coursesCount.ToString());
 				Response.Headers.Append("Total-Enrollments", totalEnrollments.ToString());
 				Response.Headers.Append("Total-Students", uniqueStudents.ToString());
 				Response.Headers.Append("Total-Revenue", totalRevenue.ToString("F2"));
+				Response.Headers.Append("Total-Count", totalCount.ToString());
 				Response.Headers.Append("Page-Number", page.ToString());
 				Response.Headers.Append("Page-Size", pageSize.ToString());
-				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Total-Enrollments, Total-Students, Total-Revenue, Page-Number, Page-Size");
+				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Courses, Total-Enrollments, Total-Students, Total-Revenue, Total-Count, Page-Number, Page-Size");
 
 				return Ok(new { success = true, data = pagedCourses });
 			}
@@ -617,7 +621,7 @@ namespace LoopLearn.API.Controllers
                             PerformedBy = h.PerformedBy.FullName,
                             PerformedAt = h.PerformedAt
                         },
-                        include: "PerformedBy",
+                        includes: "PerformedBy",
                         orderBy: q => q.OrderByDescending(h => h.PerformedAt)
                     );
 

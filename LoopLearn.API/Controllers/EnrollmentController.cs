@@ -113,7 +113,7 @@ namespace LoopLearn.API.Controllers
                             LastAccessAt = e.LastAccessAt,
                             CompletedAt = e.CompletedAt
                         },
-                        include: "Course,Course.Instructor",
+                        includes: "Course,Course.Instructor",
                         ignoreQueryFilters: true
                     );
 

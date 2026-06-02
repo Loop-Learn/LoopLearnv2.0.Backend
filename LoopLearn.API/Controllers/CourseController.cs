@@ -34,8 +34,9 @@ namespace LoopLearn.API.Controllers
 					});
 				}
 				var coursesDTOs = await _unitOfWork.Courses.GetAsync(
+														predicate: c => c.Status == CourseStatus.Published,
 														selector: MapToCourseCardDTO,
-														include: "Instructor,Feedbacks,Category");
+														includes: "Instructor,Feedbacks,Category");
 
 				if (coursesDTOs is null || !coursesDTOs.Any())
 				{
@@ -91,7 +92,7 @@ namespace LoopLearn.API.Controllers
 				}
 				var categoriesInDb = await _unitOfWork.Categories.GetAsync(predicate: c => categories.Contains(c.Name),
 																		   selector: c => c.Id);
-				if (categoriesInDb is null)
+				if (categoriesInDb is null || !categoriesInDb.Any())
 				{
 					return NotFound(new
 					{
@@ -100,9 +101,9 @@ namespace LoopLearn.API.Controllers
 					});
 				}
 				var coursesDTOs = await _unitOfWork.Courses.GetAsync(
-										predicate: c => categoriesInDb.Contains(c.CategoryId),
+										predicate: c => categoriesInDb.Contains(c.CategoryId) && c.Status == CourseStatus.Published,
 										selector: MapToCourseCardDTO,
-										include: "Instructor,Feedbacks");
+										includes: "Instructor,Feedbacks");
 
 				if (coursesDTOs is null || !coursesDTOs.Any())
 				{
@@ -165,9 +166,10 @@ namespace LoopLearn.API.Controllers
 								c.Title.ToLower().Contains(word) ||
 								c.Subtitle.ToLower().Contains(word) ||
 								c.CourseTags.Any(ct => ct.Tag != null && ct.Tag.Name.ToLower().Contains(word))
+								&& c.Status == CourseStatus.Published
 					),
 					selector: MapToCourseCardDTO,
-					include: "Instructor,Feedbacks,CourseTags");
+					includes: "Instructor,Feedbacks,CourseTags");
 
 				if (coursesCardDTOs is null || !coursesCardDTOs.Any())
 				{
@@ -225,8 +227,9 @@ namespace LoopLearn.API.Controllers
 					});
 				}
 
-				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId,
-							 "Instructor,Category,Feedbacks,Enrollments,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
+				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
+										predicate: c => c.Id == courseId && c.Status == CourseStatus.Published,
+							 includes: "Instructor,Category,Feedbacks,Enrollments,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
 
 				if (course is null)
 				{

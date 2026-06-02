@@ -51,7 +51,7 @@ namespace LoopLearn.API.Controllers
                             IsFree = c.IsFree,
                             SubmittedForReviewAt = c.SubmittedForReviewAt
                         },
-                        include: "Instructor,Category",
+                        includes: "Instructor,Category",
                         orderBy: q => q.OrderBy(c => c.SubmittedForReviewAt)
                     );
 
@@ -210,7 +210,7 @@ namespace LoopLearn.API.Controllers
                             PerformedBy = h.PerformedBy.FullName,
                             PerformedAt = h.PerformedAt
                         },
-                        include: "PerformedBy",
+                        includes: "PerformedBy",
                         orderBy: q => q.OrderByDescending(h => h.PerformedAt)
                     );
 
