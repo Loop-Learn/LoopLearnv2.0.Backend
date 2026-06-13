@@ -99,14 +99,27 @@ namespace LoopLearn.API.Controllers
                 course.UpdatedAt = DateTime.UtcNow;
                 _unitOfWork.Courses.Update(course);
 
-                await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
+                var reviewHistory = await _unitOfWork.CourseReviewHistories.GetFirstOrDefaultAsync(c => c.CourseId == course.Id);
+                if (reviewHistory is null)
                 {
-                    CourseId = course.Id,
-                    Action = CourseStatus.Approved,
-                    Comment = null,
-                    PerformedById = adminId,
-                    PerformedAt = DateTime.UtcNow
-                });
+                    await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
+                    {
+                        CourseId = course.Id,
+                        Action = CourseStatus.Approved,
+                        Comment = "Your course is approved.",
+                        PerformedById = adminId,
+                        PerformedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    reviewHistory.Action = CourseStatus.Approved;
+                    reviewHistory.Comment = "Your course is approved.";
+                    reviewHistory.PerformedById = adminId;
+                    reviewHistory.PerformedAt = DateTime.UtcNow;
+
+                    _unitOfWork.CourseReviewHistories.Update(reviewHistory);                    
+                }
 
                 await _unitOfWork.SaveAsync();
 
@@ -156,14 +169,27 @@ namespace LoopLearn.API.Controllers
                 course.UpdatedAt = DateTime.UtcNow;
                 _unitOfWork.Courses.Update(course);
 
-                await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
+                var reviewHistory = await _unitOfWork.CourseReviewHistories.GetFirstOrDefaultAsync(c => c.CourseId == course.Id);
+                if (reviewHistory is null)
                 {
-                    CourseId = course.Id,
-                    Action = CourseStatus.Rejected,
-                    Comment = model.Comment,
-                    PerformedById = adminId,
-                    PerformedAt = DateTime.UtcNow
-                });
+                    await _unitOfWork.CourseReviewHistories.AddAsync(new CourseReviewHistory
+                    {
+                        CourseId = course.Id,
+                        Action = CourseStatus.Rejected,
+                        Comment = model.Comment,
+                        PerformedById = adminId,
+                        PerformedAt = DateTime.UtcNow
+                    });
+                }
+                else
+                {
+                    reviewHistory.Action = CourseStatus.Rejected;
+                    reviewHistory.Comment = model.Comment;
+                    reviewHistory.PerformedById = adminId;
+                    reviewHistory.PerformedAt = DateTime.UtcNow;
+
+                    _unitOfWork.CourseReviewHistories.Update(reviewHistory);
+                }
 
                 await _unitOfWork.SaveAsync();
 

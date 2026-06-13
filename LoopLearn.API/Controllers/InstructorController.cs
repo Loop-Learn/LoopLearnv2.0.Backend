@@ -4,6 +4,7 @@ using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LoopLearn.API.Controllers
@@ -225,13 +226,17 @@ namespace LoopLearn.API.Controllers
                         message = $"Validation error for course ID {courseId}."
                     });
                 }
-
-                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId,
+                var instructorId = GetUserId();
+                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId && c.InstructorId == instructorId,
                              "Category,Instructor,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
 
                 if (course is null)
                 {
-                    return NotFound($"Course with ID {courseId} not found.");
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = $"Course with ID {courseId} not found or not created by you."
+                    });
                 }
 
                 var courseDetail = MapToCourseDetailDTO(course);
