@@ -1,6 +1,7 @@
 using LoopLearn.API.Services.Auth;
 using LoopLearn.API.Services.Courses;
 using LoopLearn.API.Services.Enroll;
+using LoopLearn.API.Services.Shared;
 using LoopLearn.DataAccess.Data;
 using LoopLearn.DataAccess.Implementation;
 using LoopLearn.Entities.Helpers.Models;
@@ -35,6 +36,7 @@ namespace LoopLearn.API
             builder.Services.AddScoped<EnrollmentService, EnrollmentService>();
 			builder.Services.AddScoped<CourseUpdateService, CourseUpdateService>();
             builder.Services.AddScoped<CourseValidationService, CourseValidationService>();
+            builder.Services.AddScoped<ImageService,ImageService>();
 
 
 			// ── Identity ──────────────────────────────────────────────────────
@@ -116,6 +118,7 @@ namespace LoopLearn.API
                 });
 
             builder.Services.AddSwaggerGen();
+            builder.Services.AddMemoryCache();
 
             // ── Build ─────────────────────────────────────────────────────────
             var app = builder.Build();

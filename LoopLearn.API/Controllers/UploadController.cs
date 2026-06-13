@@ -1,6 +1,8 @@
-﻿using LoopLearn.Entities.Helpers.Models;
+﻿using LoopLearn.API.Services.Shared;
+using LoopLearn.Entities.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -8,12 +10,21 @@ using Microsoft.AspNetCore.Mvc;
 public class UploadController : ControllerBase
 {
     private readonly IWebHostEnvironment _environment;
-
-    public UploadController(IWebHostEnvironment environment)
+    private readonly IMemoryCache _cache;
+    private readonly ImageService _imageService;
+    public UploadController(IWebHostEnvironment environment , IMemoryCache cache, ImageService imageService)
     {
         _environment = environment;
+        _cache = cache;
+        _imageService = imageService;
     }
-
+    private string GetUserId()
+    {
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrEmpty(userId))
+            throw new UnauthorizedAccessException();
+        return userId;
+    }
     [HttpPost]
     public async Task<IActionResult> UploadFile([FromForm] UploadRequest model)
     {
@@ -42,6 +53,14 @@ public class UploadController : ControllerBase
         if (file.Length > config.MaxSize)
             return BadRequest(new { success = false, message = $"File size exceeds limit ({config.MaxSize / 1024 / 1024} MB)." });
 
+        var userId = GetUserId();
+        var cacheKey = $"{userId}_{type}";
+
+        if(_cache.TryGetValue(cacheKey , out string prviousUrl))
+        {
+            await _imageService.DeleteOldImageFileAsync(prviousUrl);
+        }
+
         // Build folder path: wwwroot/uploads/{Folder}
         var uploadFolder = Path.Combine(_environment.WebRootPath, "uploads", config.Folder);
         if (!Directory.Exists(uploadFolder))
@@ -59,6 +78,11 @@ public class UploadController : ControllerBase
         // Build public URL (adjust base URL if using a proxy or CDN)
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         var fileUrl = $"{baseUrl}/uploads/{config.Folder}/{uniqueFileName}";
+
+        _cache.Set(cacheKey, fileUrl, new MemoryCacheEntryOptions
+        {
+            SlidingExpiration = TimeSpan.FromMinutes(30)
+        });
 
         return Ok(new { success = true, url = fileUrl });
     }

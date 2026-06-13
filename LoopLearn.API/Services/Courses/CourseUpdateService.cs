@@ -1,4 +1,5 @@
-﻿using LoopLearn.Entities.DTOs.Course;
+﻿using LoopLearn.API.Services.Shared;
+using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
@@ -8,17 +9,26 @@ namespace LoopLearn.API.Services.Courses
     public class CourseUpdateService
     {
         private readonly IUnitOfWork _unitOfWork;
-
-        public CourseUpdateService(IUnitOfWork unitOfWork)
+        private readonly ImageService _imageService;
+        public CourseUpdateService(IUnitOfWork unitOfWork, ImageService imageService)
         {
             _unitOfWork = unitOfWork;
+            _imageService = imageService;
         }
 
         public async Task UpdateCourseDataAsync(Course course, UpdateCourseDTO model)
         {
             // ── Scalar Fields ─────────────────────────────
             if (model.Description is not null) course.Description = model.Description;
-            if (model.ThumbnailUrl is not null) course.ThumbnailUrl = model.ThumbnailUrl;
+            if (model.ThumbnailUrl is not null)
+            {
+                if (!string.Equals(course.ThumbnailUrl, model.ThumbnailUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Delete the old thumbnail file if it exists and is a local file
+                    await _imageService.DeleteOldImageFileAsync(course.ThumbnailUrl);
+                }
+                course.ThumbnailUrl = model.ThumbnailUrl ?? "";
+            }
             if (model.Subtitle is not null) course.Subtitle = model.Subtitle;
             if (model.Language is not null) course.Language = model.Language;
             if (model.Level is not null) course.Level = model.Level.Value;

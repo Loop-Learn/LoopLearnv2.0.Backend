@@ -8,13 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="wwwroot\uploads\course-thumbnails\**" />
-    <Content Remove="wwwroot\uploads\course-thumbnails\**" />
-    <EmbeddedResource Remove="wwwroot\uploads\course-thumbnails\**" />
-    <None Remove="wwwroot\uploads\course-thumbnails\**" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.24" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.24" NoWarn="NU1605" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.26">
