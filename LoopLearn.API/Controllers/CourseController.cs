@@ -1,10 +1,13 @@
-﻿using LoopLearn.Entities.DTOs.Course;
+﻿using LoopLearn.API.Services.Enroll;
+using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
+using System.Security.Claims;
 
 namespace LoopLearn.API.Controllers
 {
@@ -15,10 +18,14 @@ namespace LoopLearn.API.Controllers
 	public class CourseController : ControllerBase
 	{
 		private readonly IUnitOfWork _unitOfWork;
-		public CourseController(IUnitOfWork unitOfWork)
-		{
-			_unitOfWork = unitOfWork;
-		}
+        private readonly EnrollmentService _enrollment;
+
+        public CourseController(IUnitOfWork unitOfWork,EnrollmentService enrollment)
+        {
+            _unitOfWork = unitOfWork;
+            _enrollment = enrollment;
+        }
+
 
 		[HttpGet("all")]
 		public async Task<IActionResult> GetCourses([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
@@ -255,8 +262,82 @@ namespace LoopLearn.API.Controllers
 			}
 		}
 
-		#region Mapping to DTO Methods
-		private static Expression<Func<Course, CourseCardDTO>> MapToCourseCardDTO =>
+        [HttpGet("{courseId}/feedbacks")]
+        public async Task<IActionResult> GetFeedbacks(int courseId)
+        {
+            try
+            {
+                var feedback = await _unitOfWork.Feedbacks.GetAllAsync(f => f.CourseId == courseId);
+                if (feedback == null) return Ok(new { success = true, data = (FeedbacksDTO?)null });
+                return Ok(new
+                {
+                    success = true,
+                    data = MapToFeedbacksDTOs(feedback.ToList())
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost("{courseId}/feedback")]
+		[Authorize]
+        public async Task<IActionResult> AddFeedback(int courseId, [FromBody] FeedbackDTO dto)
+        {
+            try
+            {
+                var enrollment = await _enrollment.ValidateEnrollmentAsync(UserId, courseId);
+                if (enrollment == null)
+                    return Unauthorized(new { success = false, message = "You must be enrolled to leave feedback." });
+
+                var existing = await _unitOfWork.Feedbacks.GetFirstOrDefaultAsync(f => f.StudentId == UserId && f.CourseId == courseId);
+                if (existing != null)
+                {
+                    existing.Rating = dto.Rating;
+                    existing.Comment = dto.Comment;
+                    existing.UpdatedAt = DateTime.UtcNow;
+                    _unitOfWork.Feedbacks.Update(existing);
+                }
+                else
+                {
+                    await _unitOfWork.Feedbacks.AddAsync(new Feedback
+                    {
+                        StudentId = UserId,
+                        CourseId = courseId,
+                        Rating = dto.Rating,
+                        Comment = dto.Comment,
+                        CreatedAt = DateTime.UtcNow
+                    });
+                }
+                await _unitOfWork.SaveAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{courseId}/feedback")]
+		[Authorize]
+        public async Task<IActionResult> DeleteFeedback(int courseId)
+        {
+            try
+            {
+                var feedback = await _unitOfWork.Feedbacks.GetFirstOrDefaultAsync(f => f.StudentId == UserId && f.CourseId == courseId);
+                if (feedback == null) return NotFound(new { success = false, message = "Feedback not found." });
+                _unitOfWork.Feedbacks.Remove(feedback);
+                await _unitOfWork.SaveAsync();
+                return Ok(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+        #region Mapping to DTO Methods
+        private static Expression<Func<Course, CourseCardDTO>> MapToCourseCardDTO =>
 			   c => new CourseCardDTO
 			   {
 				   Id = c.Id,
@@ -357,17 +438,9 @@ namespace LoopLearn.API.Controllers
 				PostedAt = f.UpdatedAt ?? f.CreatedAt
 			}).OrderBy(f => f.PostedAt).ThenBy(f => f.Rating).ToList();
 		}
-		private string GetUserId()
-		{
-			var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-			if (string.IsNullOrEmpty(userIdClaim))
-			{
-				throw new UnauthorizedAccessException();
-			}
+        private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("Invalid token.");
+        #endregion
 
-			return userIdClaim;
-		}
-		#endregion
-
-	}
+    }
 }

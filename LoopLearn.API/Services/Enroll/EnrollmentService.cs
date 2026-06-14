@@ -70,6 +70,12 @@ namespace LoopLearn.API.Services.Enroll
 
             return enrollment;
         }
+
+        public async Task<Enrollment?> ValidateEnrollmentAsync(string studentId, int courseId)
+        {
+            return await _unitOfWork.Enrollments.GetFirstOrDefaultAsync(e =>
+                e.StudentId == studentId && e.CourseId == courseId && e.Status == EnrollmentStatus.Active);
+        }
     }
 }
 

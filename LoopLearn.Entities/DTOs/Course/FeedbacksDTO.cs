@@ -8,4 +8,9 @@
         public int Rating { get; set; }
         public DateTime PostedAt { get; set; }
     }
+    public class FeedbackDTO
+    {
+        public int Rating { get; set; } // 1-5
+        public string Comment { get; set; }
+    }
 }

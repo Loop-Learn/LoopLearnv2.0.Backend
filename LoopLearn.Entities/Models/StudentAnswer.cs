@@ -16,5 +16,6 @@ namespace LoopLearn.Entities.Models
         public int OptionId { get; set; }
 
         public Option Option { get; set; }
+        public bool IsCorrect { get; set; }
     }
 }

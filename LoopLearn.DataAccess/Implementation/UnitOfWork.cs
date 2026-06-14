@@ -27,8 +27,10 @@ namespace LoopLearn.DataAccess.Implementation
 		IOptionRepository _options;
 		IPaymentRepository _payments;
 		ICourseReviewHistoryRepository _courseReviewHistoryRepository;
+		ILessonCommentRepository _lessonComments;
+		IStudentAnswersRepository _studentAnswers;
 
-		public UnitOfWork(ApplicationDbContext context)
+        public UnitOfWork(ApplicationDbContext context)
 		{
 			_context = context;
 		}
@@ -281,6 +283,30 @@ namespace LoopLearn.DataAccess.Implementation
                 return _courseReviewHistoryRepository;
             }
             private set { _courseReviewHistoryRepository = value; }
+        }
+        public ILessonCommentRepository LessonComments
+        {
+            get
+            {
+                if (_lessonComments is null)
+                {
+                    _lessonComments = new LessonCommentRepository(_context);
+                }
+                return _lessonComments;
+            }
+            private set { _lessonComments = value; }
+        }
+        public IStudentAnswersRepository StudentAnswers
+        {
+            get
+            {
+                if (_studentAnswers is null)
+                {
+                    _studentAnswers = new StudentAnswersRepository(_context);
+                }
+                return _studentAnswers;
+            }
+            private set { _studentAnswers = value; }
         }
 
         public void Dispose()
