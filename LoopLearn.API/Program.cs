@@ -1,3 +1,4 @@
+using LoopLearn.API.Services;
 using LoopLearn.API.Services.Auth;
 using LoopLearn.API.Services.Courses;
 using LoopLearn.API.Services.Enroll;
@@ -36,6 +37,7 @@ namespace LoopLearn.API
             builder.Services.AddScoped<EnrollmentService, EnrollmentService>();
 			builder.Services.AddScoped<CourseUpdateService, CourseUpdateService>();
             builder.Services.AddScoped<CourseValidationService, CourseValidationService>();
+            builder.Services.AddScoped<CourseMappingService, CourseMappingService>();
             builder.Services.AddScoped<ImageService,ImageService>();
 
 
