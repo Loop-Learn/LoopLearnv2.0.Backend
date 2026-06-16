@@ -1,7 +1,5 @@
 ﻿using LoopLearn.API.Services.Enroll;
 using LoopLearn.Entities.DTOs.Learning;
-using LoopLearn.Entities.DTOs.Users;
-using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -562,7 +560,7 @@ namespace LoopLearn.API.Controllers
         // Allowed if previously Rejected — creates a new application row.
         // =============================================
         [HttpPost("instructor-application")]
-        public async Task<IActionResult> Apply([FromBody] SubmitInstructorApplicationDTO model)
+        public async Task<IActionResult> Apply()
         {
             try
             {
@@ -580,96 +578,21 @@ namespace LoopLearn.API.Controllers
                         message = "You are already an instructor."
                     });
 
-                // Block if a pending application already exists
-                var hasPending = await _unitOfWork.InstructorApplications
-                    .ExistsAsync(a =>
-                        a.StudentId == UserId &&
-                        a.Status == ApplicationStatus.Pending);
-
-                if (hasPending)
+                if (user.IsInstructorRequested)
                     return Conflict(new
                     {
                         success = false,
-                        message = "You already have a pending application. Please wait for it to be reviewed. "
+                        message = "You already have a pending request. Please wait for it to be reviewed."
                     });
-
-                var application = new InstructorApplication
-                {
-                    StudentId = UserId,
-                    Bio = model.Bio,
-                    Expertise = model.Expertise,
-                    LinkedinUrl = model.LinkedinUrl,
-                    TeachingExperience = model.TeachingExperience,
-                    CvUrl = model.CvUrl,
-                    Status = ApplicationStatus.Pending,
-                    AppliedAt = DateTime.UtcNow
-                };
-
-                await _unitOfWork.InstructorApplications.AddAsync(application);
-                await _unitOfWork.SaveAsync();
-
+ 
+                user.IsInstructorRequested = true;
+                await _userManager.UpdateAsync(user);
+ 
                 return Ok(new
                 {
                     success = true,
-                    message = "Your application has been submitted and is under review."
+                    message = "Your request has been submitted and is under review."
                 });
-            }
-            catch (UnauthorizedAccessException)
-            {
-                return Unauthorized(new { success = false, message = "Invalid token." });
-            }
-            catch (Exception e)
-            {
-                return StatusCode(500, new { success = false, message = e.Message });
-            }
-        }
-
-        // =============================================
-        // GET /api/student/instructor-applications
-        // Returns the student's most recent application and its status.
-        // =============================================
-        [HttpGet("instructor-applications")]
-        public async Task<IActionResult> GetMyApplication()
-        {
-            try
-            {
-                // Most recent application — a student may have multiple
-                // (one per rejection + resubmission cycle)
-                var application = await _unitOfWork.InstructorApplications
-                    .GetAsync(
-                        predicate: a => a.StudentId == UserId,
-                        selector: a => new InstructorApplicationDTO
-                        {
-                            Id = a.Id,
-                            StudentName = a.Student.FullName,
-                            StudentEmail = a.Student.Email,
-                            Bio = a.Bio,
-                            Expertise = a.Expertise,
-                            LinkedinUrl = a.LinkedinUrl,
-                            TeachingExperience = a.TeachingExperience,
-                            CvUrl = a.CvUrl,
-                            Status = a.Status.ToString(),
-                            RejectionReason = a.RejectionReason,
-                            AppliedAt = a.AppliedAt,
-                            ReviewedAt = a.ReviewedAt,
-                            ReviewedBy = a.ReviewedBy != null
-                                ? a.ReviewedBy.FullName
-                                : null
-                        },
-                        includes: "Student,ReviewedBy",
-                        orderBy: q => q.OrderByDescending(a => a.AppliedAt)
-                    );
-
-                var latest = application.FirstOrDefault();
-
-                if (latest is null)
-                    return NotFound(new
-                    {
-                        success = false,
-                        message = "You have not submitted an application yet."
-                    });
-
-                return Ok(new { success = true, data = latest });
             }
             catch (UnauthorizedAccessException)
             {
