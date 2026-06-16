@@ -313,6 +313,10 @@ namespace LoopLearn.API.Controllers
                 await _unitOfWork.SaveAsync();
                 return Ok(new { success = true });
             }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
@@ -330,6 +334,10 @@ namespace LoopLearn.API.Controllers
                 _unitOfWork.Feedbacks.Remove(feedback);
                 await _unitOfWork.SaveAsync();
                 return Ok(new { success = true });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {

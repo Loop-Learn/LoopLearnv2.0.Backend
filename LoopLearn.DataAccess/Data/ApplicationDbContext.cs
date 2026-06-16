@@ -37,6 +37,7 @@ namespace LoopLearn.DataAccess.Data
         public DbSet<Payment> Payments { get; set; }
 
         public DbSet<CourseReviewHistory> CourseReviewHistories { get; set; }
+        public DbSet<InstructorApplication> InstructorApplications { get; set; }
 
 
         #endregion
@@ -54,6 +55,7 @@ namespace LoopLearn.DataAccess.Data
 
             modelBuilder.Entity<StudentLessonProgress>()
                 .HasKey(x => new { x.StudentId, x.LessonId });
+
 
             // Course Configuration
             modelBuilder.Entity<Course>()
@@ -253,6 +255,22 @@ namespace LoopLearn.DataAccess.Data
             modelBuilder.Entity<CourseReviewHistory>()
                 .HasIndex(h => h.CourseId)
                 .HasDatabaseName("IX_CourseReviewHistories_CourseId");
+
+            modelBuilder.Entity<InstructorApplication>()
+                .HasIndex(a => new { a.StudentId, a.Status })
+                .HasDatabaseName("IX_InstructorApplications_StudentId_Status");
+
+            modelBuilder.Entity<InstructorApplication>()
+                .HasOne(a => a.Student)
+                .WithMany()
+                .HasForeignKey(a => a.StudentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<InstructorApplication>()
+                .HasOne(a => a.ReviewedBy)
+                .WithMany()
+                .HasForeignKey(a => a.ReviewedById)
+                .OnDelete(DeleteBehavior.SetNull);
 
             // Apply Restrict delete behavior to all remaining relationships not explicitly configured
             foreach (var relationship in modelBuilder.Model.GetEntityTypes().SelectMany(e => e.GetForeignKeys()))

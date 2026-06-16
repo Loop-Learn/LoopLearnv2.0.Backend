@@ -25,6 +25,7 @@ namespace LoopLearn.Entities.Interfaces
         ICourseReviewHistoryRepository CourseReviewHistories { get; }
         ILessonCommentRepository LessonComments { get; }
         IStudentAnswersRepository StudentAnswers { get; }
+        IInstructorApplicationRepository InstructorApplications { get; }
 
 
         Task<int> SaveAsync();

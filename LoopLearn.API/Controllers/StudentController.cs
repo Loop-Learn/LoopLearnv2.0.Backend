@@ -1,5 +1,7 @@
 ﻿using LoopLearn.API.Services.Enroll;
 using LoopLearn.Entities.DTOs.Learning;
+using LoopLearn.Entities.DTOs.Users;
+using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +41,7 @@ namespace LoopLearn.API.Controllers
                     return Unauthorized(new { success = false, message = "Not enrolled." });
 
                 var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
-                    c => c.Id == courseId && !c.IsDeleted,
+                    c => c.Id == courseId,
                     includes: "Sections,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions"
                 );
                 if (course == null)
@@ -152,84 +154,9 @@ namespace LoopLearn.API.Controllers
                     }
                 });
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException)
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet("courses/{courseId}/resume")]
-        public async Task<IActionResult> GetResumePoint(int courseId)
-        {
-            try
-            {
-                var enrollment = await _enrollment.ValidateEnrollmentAsync(UserId, courseId);
-                if (enrollment == null)
-                    return NotFound(new { success = false, message = "Not enrolled." });
-
-                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
-                    c => c.Id == courseId && !c.IsDeleted,
-                    includes: "Sections,Sections.Lessons,Sections.Quizzes"
-                );
-                if (course == null) return NotFound();
-
-                var allLessonIds = course.Sections.SelectMany(s => s.Lessons).Select(l => l.Id).ToList();
-                var completedLessons = (await _unitOfWork.LessonProgresses
-                    .GetAllAsync(p => p.StudentId == UserId && allLessonIds.Contains(p.LessonId) && p.IsCompleted))
-                    .Select(p => p.LessonId).ToHashSet();
-
-                var allQuizIds = course.Sections.SelectMany(s => s.Quizzes).Select(q => q.Id).ToList();
-                var passedQuizzes = (await _unitOfWork.QuizAttempts
-                    .GetAllAsync(a => a.StudentId == UserId && allQuizIds.Contains(a.QuizId) && a.IsPassed))
-                    .Select(a => a.QuizId).ToHashSet();
-
-                foreach (var section in course.Sections.OrderBy(s => s.Order))
-                {
-                    foreach (var lesson in section.Lessons.OrderBy(l => l.Order))
-                    {
-                        if (!completedLessons.Contains(lesson.Id))
-                        {
-                            var progress = await _unitOfWork.LessonProgresses
-                                .GetFirstOrDefaultAsync(p => p.StudentId == UserId && p.LessonId == lesson.Id);
-                            return Ok(new
-                            {
-                                success = true,
-                                data = new ResumeDTO
-                                {
-                                    CourseId = courseId,
-                                    CourseTitle = course.Title,
-                                    ItemType = "Lesson",
-                                    ItemId = lesson.Id,
-                                    ItemTitle = lesson.Title,
-                                    LastSecondWatched = progress?.LastSecondWatched ?? 0,
-                                    CourseProgressPercentage = enrollment.ProgressPercentage
-                                }
-                            });
-                        }
-                    }
-                    foreach (var quiz in section.Quizzes.OrderBy(q => q.Id))
-                    {
-                        if (!passedQuizzes.Contains(quiz.Id))
-                        {
-                            return Ok(new
-                            {
-                                success = true,
-                                data = new ResumeDTO
-                                {
-                                    CourseId = courseId,
-                                    CourseTitle = course.Title,
-                                    ItemType = "Quiz",
-                                    ItemId = quiz.Id,
-                                    ItemTitle = quiz.Title,
-                                    LastSecondWatched = null,
-                                    CourseProgressPercentage = enrollment.ProgressPercentage
-                                }
-                            });
-                        }
-                    }
-                }
-
-                return Ok(new { success = true, data = (ResumeDTO?)null });
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -306,82 +233,9 @@ namespace LoopLearn.API.Controllers
                     }
                 });
             }
-            catch (Exception ex)
+            catch (UnauthorizedAccessException)
             {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
-        }
-
-        [HttpGet("courses/{courseId}/progress")]
-        public async Task<IActionResult> GetCourseProgress(int courseId)
-        {
-            try
-            {
-                var enrollment = await _enrollment.ValidateEnrollmentAsync(UserId, courseId);
-                if (enrollment == null)
-                    return NotFound(new { success = false, message = "Not enrolled." });
-
-                var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
-                    c => c.Id == courseId && !c.IsDeleted,
-                    includes: "Sections,Sections.Lessons,Sections.Quizzes"
-                );
-                if (course == null) return NotFound();
-
-                var sectionsDto = new List<SectionProgressDTO>();
-                foreach (var section in course.Sections.OrderBy(s => s.Order))
-                {
-                    var lessonsDto = new List<LessonProgressItemDTO>();
-                    foreach (var lesson in section.Lessons.OrderBy(l => l.Order))
-                    {
-                        var progress = await _unitOfWork.LessonProgresses
-                            .GetFirstOrDefaultAsync(p => p.StudentId == UserId && p.LessonId == lesson.Id);
-                        lessonsDto.Add(new LessonProgressItemDTO
-                        {
-                            LessonId = lesson.Id,
-                            Title = lesson.Title,
-                            IsCompleted = progress?.IsCompleted ?? false,
-                            WatchedPercentage = progress?.WatchedPercentage ?? 0,
-                            LastSecondWatched = progress?.LastSecondWatched ?? 0
-                        });
-                    }
-
-                    var quizzesDto = new List<QuizProgressItemDTO>();
-                    foreach (var quiz in section.Quizzes)
-                    {
-                        var attempt = await _unitOfWork.QuizAttempts
-                            .GetFirstOrDefaultAsync(a => a.StudentId == UserId && a.QuizId == quiz.Id);
-                        quizzesDto.Add(new QuizProgressItemDTO
-                        {
-                            QuizId = quiz.Id,
-                            Title = quiz.Title,
-                            IsPassed = attempt?.IsPassed ?? false,
-                            Score = attempt?.Score
-                        });
-                    }
-
-                    sectionsDto.Add(new SectionProgressDTO
-                    {
-                        SectionId = section.Id,
-                        SectionTitle = section.Title,
-                        Order = section.Order,
-                        Lessons = lessonsDto,
-                        Quizzes = quizzesDto
-                    });
-                }
-
-                return Ok(new
-                {
-                    success = true,
-                    data = new CourseProgressDTO
-                    {
-                        CourseId = courseId,
-                        CourseTitle = course.Title,
-                        ProgressPercentage = enrollment.ProgressPercentage,
-                        IsCompleted = enrollment.IsCompleted,
-                        CompletedAt = enrollment.CompletedAt,
-                        Sections = sectionsDto
-                    }
-                });
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -405,6 +259,10 @@ namespace LoopLearn.API.Controllers
                     result.Add(await MapCommentWithReplies(comment));
                 }
                 return Ok(new { success = true, data = result });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -449,6 +307,10 @@ namespace LoopLearn.API.Controllers
                     }
                 });
             }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
@@ -469,6 +331,10 @@ namespace LoopLearn.API.Controllers
                 _unitOfWork.LessonComments.Update(comment);
                 await _unitOfWork.SaveAsync();
                 return Ok(new { success = true });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -499,6 +365,10 @@ namespace LoopLearn.API.Controllers
                 await _unitOfWork.SaveAsync();
 
                 return Ok(new { success = true });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -559,6 +429,10 @@ namespace LoopLearn.API.Controllers
                         }).ToList()
                     }
                 });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
             }
             catch (Exception ex)
             {
@@ -671,29 +545,164 @@ namespace LoopLearn.API.Controllers
                     }
                 });
             }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
 
+        // =============================================
+        // POST /api/student/instructor-application
+        // Submit a new application to become an instructor.
+        // Blocked if already an Instructor/Admin, or has a Pending application.
+        // Allowed if previously Rejected — creates a new application row.
+        // =============================================
+        [HttpPost("instructor-application")]
+        public async Task<IActionResult> Apply([FromBody] SubmitInstructorApplicationDTO model)
+        {
+            try
+            {
+                var user = await _userManager.FindByIdAsync(UserId);
+
+                if (user is null)
+                    return NotFound(new { success = false, message = "User not found." });
+
+                // Block if already an instructor or admin
+                var currentRoles = await _userManager.GetRolesAsync(user);
+                if (currentRoles.Contains("Instructor") || currentRoles.Contains("Admin") || currentRoles.Contains("SuperAdmin"))
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "You are already an instructor."
+                    });
+
+                // Block if a pending application already exists
+                var hasPending = await _unitOfWork.InstructorApplications
+                    .ExistsAsync(a =>
+                        a.StudentId == UserId &&
+                        a.Status == ApplicationStatus.Pending);
+
+                if (hasPending)
+                    return Conflict(new
+                    {
+                        success = false,
+                        message = "You already have a pending application. Please wait for it to be reviewed. "
+                    });
+
+                var application = new InstructorApplication
+                {
+                    StudentId = UserId,
+                    Bio = model.Bio,
+                    Expertise = model.Expertise,
+                    LinkedinUrl = model.LinkedinUrl,
+                    TeachingExperience = model.TeachingExperience,
+                    CvUrl = model.CvUrl,
+                    Status = ApplicationStatus.Pending,
+                    AppliedAt = DateTime.UtcNow
+                };
+
+                await _unitOfWork.InstructorApplications.AddAsync(application);
+                await _unitOfWork.SaveAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = "Your application has been submitted and is under review."
+                });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
+
+        // =============================================
+        // GET /api/student/instructor-applications
+        // Returns the student's most recent application and its status.
+        // =============================================
+        [HttpGet("instructor-applications")]
+        public async Task<IActionResult> GetMyApplication()
+        {
+            try
+            {
+                // Most recent application — a student may have multiple
+                // (one per rejection + resubmission cycle)
+                var application = await _unitOfWork.InstructorApplications
+                    .GetAsync(
+                        predicate: a => a.StudentId == UserId,
+                        selector: a => new InstructorApplicationDTO
+                        {
+                            Id = a.Id,
+                            StudentName = a.Student.FullName,
+                            StudentEmail = a.Student.Email,
+                            Bio = a.Bio,
+                            Expertise = a.Expertise,
+                            LinkedinUrl = a.LinkedinUrl,
+                            TeachingExperience = a.TeachingExperience,
+                            CvUrl = a.CvUrl,
+                            Status = a.Status.ToString(),
+                            RejectionReason = a.RejectionReason,
+                            AppliedAt = a.AppliedAt,
+                            ReviewedAt = a.ReviewedAt,
+                            ReviewedBy = a.ReviewedBy != null
+                                ? a.ReviewedBy.FullName
+                                : null
+                        },
+                        includes: "Student,ReviewedBy",
+                        orderBy: q => q.OrderByDescending(a => a.AppliedAt)
+                    );
+
+                var latest = application.FirstOrDefault();
+
+                if (latest is null)
+                    return NotFound(new
+                    {
+                        success = false,
+                        message = "You have not submitted an application yet."
+                    });
+
+                return Ok(new { success = true, data = latest });
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Unauthorized(new { success = false, message = "Invalid token." });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { success = false, message = e.Message });
+            }
+        }
+        
         #region Helper Methods
         private async Task<(double percentage, bool justCompleted)> RecalculateCourseProgressAsync(string studentId, int courseId, Enrollment enrollment)
         {
             var allLessons = await _unitOfWork.Lessons.GetAsync(l => l.Section.CourseId == courseId, selector: l => l.Id);
+            
             var completedLessons = (await _unitOfWork.LessonProgresses.GetAllAsync(p =>
                 p.StudentId == studentId && allLessons.Contains(p.LessonId) && p.IsCompleted)).Count();
 
             var allQuizzes = await _unitOfWork.Quizzes.GetAsync(q =>
                 (q.CourseId == courseId || q.Section.CourseId == courseId), selector: q => q.Id);
+            
             var passedQuizzes = (await _unitOfWork.QuizAttempts.GetAllAsync(a =>
                 a.StudentId == studentId && allQuizzes.Contains(a.QuizId) && a.IsPassed)).Count();
 
             int totalItems = allLessons.Count() + allQuizzes.Count();
+           
             if (totalItems == 0) return (0, false);
+           
             int completedItems = completedLessons + passedQuizzes;
             double percentage = Math.Round((double)completedItems / totalItems * 100, 2);
             bool justCompleted = !enrollment.IsCompleted && percentage >= 100;
+           
             return (percentage, justCompleted);
         }
 
@@ -706,6 +715,7 @@ namespace LoopLearn.API.Controllers
                 Id = comment.Id,
                 StudentId = comment.StudentId,
                 StudentFullName = student?.FullName ?? "",
+                StudentImage = student.ProfileImageUrl ?? "",
                 Comment = comment.Comment,
                 CreatedAt = comment.CreatedAt,
                 UpdatedAt = comment.UpdatedAt,

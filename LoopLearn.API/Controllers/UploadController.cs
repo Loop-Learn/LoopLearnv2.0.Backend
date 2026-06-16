@@ -38,7 +38,8 @@ public class UploadController : ControllerBase
         var allowedTypes = new Dictionary<string, (string[] Extensions, long MaxSize, string Folder)>
         {
             ["avatar"] = (new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }, 2 * 1024 * 1024, "avatars"),
-            ["course-thumbnail"] = (new[] { ".jpg", ".jpeg", ".png", ".webp" }, 5 * 1024 * 1024, "course-thumbnails")
+            ["course-thumbnail"] = (new[] { ".jpg", ".jpeg", ".png", ".webp" }, 5 * 1024 * 1024, "course-thumbnails"),
+            ["cv"] = (new[] { ".pdf" }, 5 * 1024 * 1024, "cvs")
         };
 
         if (!allowedTypes.ContainsKey(type))
