@@ -4,7 +4,6 @@ using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq.Expressions;
 using System.Security.Claims;
@@ -267,13 +266,15 @@ namespace LoopLearn.API.Controllers
         {
             try
             {
-                var feedback = await _unitOfWork.Feedbacks.GetAllAsync(f => f.CourseId == courseId);
+                var feedback = await _unitOfWork.Feedbacks.GetAllAsync(f => f.CourseId == courseId,includes:"Student");
                 if (feedback == null) return Ok(new { success = true, data = (FeedbacksDTO?)null });
-                return Ok(new
-                {
-                    success = true,
-                    data = MapToFeedbacksDTOs(feedback.ToList())
-                });
+				var hasPrevRate = await _unitOfWork.Feedbacks.ExistsAsync(f => f.StudentId == UserId);
+				return Ok(new
+				{
+					success = true,
+					data = MapToFeedbacksDTOs(feedback.ToList()),
+					ishadRate = hasPrevRate
+				});
             }
             catch (Exception ex)
             {
@@ -439,7 +440,8 @@ namespace LoopLearn.API.Controllers
 
 			return feedbacks.Select(f => new FeedbacksDTO
 			{
-				Username = f.Student != null ? $"{f.Student.FullName}" : "Anonymous",
+                StudentId = f.StudentId,
+                Username = f.Student != null ? $"{f.Student.FullName}" : "Anonymous",
 				Avatar = f.Student?.ProfileImageUrl ?? "",
 				Comment = f.Comment,
 				Rating = f.Rating,

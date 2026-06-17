@@ -2,6 +2,7 @@
 {
     public class FeedbacksDTO
     {
+        public string StudentId { get; set; }
         public string Username { get; set; }
         public string Avatar { get; set; }
         public string Comment { get; set; }

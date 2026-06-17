@@ -672,8 +672,8 @@ namespace LoopLearn.API.Controllers
                     SelectedOptionId = a.OptionId,
                     SelectedOptionBody = a.Option.Body,
                     IsCorrect = a.IsCorrect,
-                    CorrectOptionId = a.Question.Options.First(o => o.IsCorrect).Id,
-                    CorrectOptionBody = a.Question.Options.First(o => o.IsCorrect).Body
+                    CorrectOptionId = a.Question.Options.FirstOrDefault(o => o.IsCorrect)?.Id ?? 0,
+                    CorrectOptionBody = a.Question.Options.FirstOrDefault(o => o.IsCorrect)?.Body ?? "No correct option"
                 }).ToList()
             };
         }
