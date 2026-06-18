@@ -189,8 +189,8 @@ namespace LoopLearn.API.Controllers
                     {
                         StudentId = UserId,
                         LessonId = lessonId,
-                        WatchedPercentage = watchedPercent,
-                        LastSecondWatched = dto.LastSecondWatched,
+                        WatchedPercentage = isCompleted ? 100 : watchedPercent,
+                        LastSecondWatched = isCompleted ? dto.TotalSeconds : dto.LastSecondWatched,
                         IsCompleted = isCompleted,
                         CompletedAt = isCompleted ? DateTime.UtcNow : null
                     };
@@ -198,12 +198,21 @@ namespace LoopLearn.API.Controllers
                 }
                 else
                 {
-                    if (dto.LastSecondWatched > progress.LastSecondWatched)
-                        progress.LastSecondWatched = dto.LastSecondWatched;
-                    progress.WatchedPercentage = Math.Max(progress.WatchedPercentage, watchedPercent);
-                    if (!progress.IsCompleted && isCompleted)
+                    // If marking complete, set to full values
+                    if (isCompleted)
+                    {
+                        progress.IsCompleted = true;
                         progress.CompletedAt = DateTime.UtcNow;
-                    progress.IsCompleted = isCompleted;
+                        progress.LastSecondWatched = dto.TotalSeconds;   // force full duration
+                        progress.WatchedPercentage = 100;
+                    }
+                    else
+                    {
+                        // Only update if new second is higher
+                        if (dto.LastSecondWatched > progress.LastSecondWatched)
+                            progress.LastSecondWatched = dto.LastSecondWatched;
+                        progress.WatchedPercentage = Math.Max(progress.WatchedPercentage, watchedPercent);
+                    }
                     _unitOfWork.LessonProgresses.Update(progress);
                 }
 

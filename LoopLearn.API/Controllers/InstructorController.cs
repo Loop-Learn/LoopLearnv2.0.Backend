@@ -7,6 +7,7 @@ using LoopLearn.Entities.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace LoopLearn.API.Controllers
 {
@@ -21,17 +22,18 @@ namespace LoopLearn.API.Controllers
 		private readonly CourseUpdateService _courseUpdateService;
 		private readonly CourseValidationService _validationService;
 		private readonly CourseMappingService _courseMappingService;
+        private readonly IMemoryCache _cache;
 
-
-		public InstructorController(IUnitOfWork unitOfWork,
+        public InstructorController(IUnitOfWork unitOfWork,
             CourseUpdateService courseUpdateService,
             CourseValidationService courseValidationService,
-            CourseMappingService courseMappingService)
+            CourseMappingService courseMappingService, IMemoryCache cache)
 		{
 			_unitOfWork = unitOfWork;
 			_courseUpdateService = courseUpdateService;
 			_validationService = courseValidationService;
 			_courseMappingService = courseMappingService;
+			_cache = cache;
 		}
 
         private string GetUserId()
@@ -460,7 +462,10 @@ namespace LoopLearn.API.Controllers
 					_unitOfWork.Courses.Update(course);
 					await _unitOfWork.SaveAsync();
 					await transaction.CommitAsync();
-
+					if(model.ThumbnailUrl is not null )
+					{
+						_cache.Remove($"{instructorId}_course-thumbnail");
+					}
 					return Ok(new
 					{
 						success = true,
