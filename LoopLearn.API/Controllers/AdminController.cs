@@ -707,7 +707,7 @@ namespace LoopLearn.API.Controllers
 		}
 
 		// ============================================
-		// PATCH api/admin/users/{id}/role
+		// PATCH /api/admin/users/{id}/role
 		// Allow admin to change user's role
 		// SuperAdmin role can not be changed
 		// ============================================
@@ -819,6 +819,73 @@ namespace LoopLearn.API.Controllers
 				return StatusCode(500, new { success = false, message = e.Message });
 			}
 		}
+
+		// ============================================
+		// GET /api/admin/instructor-applications
+		// Returns all pending instructor applications for admin review.
+		// ============================================
+		[HttpGet("instructor-applications")]
+		public async Task<IActionResult> GetInstructorApplications([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+		{
+			try
+			{
+				if (page < 1 || pageSize < 1)
+					return BadRequest(new
+					{
+						success = false,
+						message = "Page and pageSize must be greater than 0."
+					});
+
+				var pagedApplications = await _userManager.Users
+					.Where(s => s.IsInstructorRequested)
+					.OrderBy(s => s.InstructorRequestedAt)
+					.Skip((page - 1) * pageSize)
+					.Take(pageSize)
+					.Select(s => new InstructorApplicationDTO
+					{
+						UserId = s.Id,
+						UserName = s.UserName ?? string.Empty,
+						FullName = s.FullName ?? string.Empty,
+						Email = s.Email ?? string.Empty,
+						Bio = s.Bio ?? string.Empty,
+						ProfileImageUrl = s.ProfileImageUrl ?? string.Empty,
+						RequestedAt = s.InstructorRequestedAt ?? DateTime.MinValue
+					})
+					.ToListAsync();
+
+				if (!pagedApplications.Any())
+					return NotFound(new
+					{
+						success = false,
+						message = "No pending instructor applications found."
+					});
+
+				var totalCount = await _userManager.Users
+					.Where(s => s.IsInstructorRequested)
+					.CountAsync();
+
+				// Header metadata
+				Response.Headers.Append("Total-Count", totalCount.ToString());
+				Response.Headers.Append("Page-Number", page.ToString());
+				Response.Headers.Append("Page-Size", pageSize.ToString());
+				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page-Number, Page-Size");
+
+				return Ok(new { success = true, data = pagedApplications });
+			}
+			catch (UnauthorizedAccessException)
+			{
+				return Unauthorized(new { success = false, message = "Invalid token." });
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+		}
+
+		// ============================================
+		// 
+		// ============================================
+
 
 
 	}

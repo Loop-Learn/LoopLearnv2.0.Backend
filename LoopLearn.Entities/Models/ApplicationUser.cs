@@ -15,7 +15,8 @@ namespace LoopLearn.Entities.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public bool IsInstructorRequested { get; set; } = false;
-        public ICollection<Course> Courses { get; set; }
+		public DateTime? InstructorRequestedAt { get; set; }
+		public ICollection<Course> Courses { get; set; }
         public ICollection<Enrollment> Enrollments { get; set; }
         public ICollection<Feedback> Feedbacks { get; set; }
         public ICollection<LessonComment> LessonComments { get; set; }

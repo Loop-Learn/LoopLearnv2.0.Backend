@@ -586,7 +586,8 @@ namespace LoopLearn.API.Controllers
                     });
  
                 user.IsInstructorRequested = true;
-                await _userManager.UpdateAsync(user);
+                user.InstructorRequestedAt = DateTime.UtcNow;
+				await _userManager.UpdateAsync(user);
  
                 return Ok(new
                 {
