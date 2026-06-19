@@ -2,6 +2,8 @@
 using LoopLearn.API.Services.Courses;
 using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.DTOs.Users;
+using LoopLearn.Entities.DTOs.Category;
+using LoopLearn.Entities.DTOs.Tag;
 using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
@@ -345,7 +347,7 @@ namespace LoopLearn.API.Controllers
 
 		// ============================================= 
 		// GET /api/admin/courses/{id}
-		// Gets detailed info for any course by ID, regardless of status for reviewing the course content.
+		// Gets detailed info for any course and its instructor by ID, regardless of status for reviewing the course content.
 		// =============================================
 		[HttpGet("courses/{courseId:int}")]
 		public async Task<IActionResult> GetCourseDetail(int courseId)
@@ -371,12 +373,23 @@ namespace LoopLearn.API.Controllers
 					});
 
 				var courseDetails = _courseMappingService.MapToCourseDetailDTO(course);
-
+				var instructorDetails = new
+				{
+					Id = course.Instructor.Id,
+					FullName = course.Instructor.FullName,
+					UserName = course.Instructor.UserName,
+					Email = course.Instructor.Email ?? "Email Not Provided.",
+					ProfileImageUrl = course.Instructor.ProfileImageUrl ?? "Profile Image Not Provided."
+				};
 				return Ok(new
 				{
 					success = true,
 					message = $"Course details for ID {courseId} retrieved successfully.",
-					data = courseDetails
+					data = new
+					{
+						CourseDetails = courseDetails,
+						InstructorDetails = instructorDetails
+					}
 				});
 
 			}
@@ -492,10 +505,12 @@ namespace LoopLearn.API.Controllers
 		// ============================================
 		// GET /api/admin/users
 		// Returns all users with their roles.
+		// Optionally filter by role (e.g., only Instructors) or search by (e.g., username, email, or full name).
 		// ============================================
 		[HttpGet("users")]
 		public async Task<IActionResult> GetAllUsers(
 			[FromQuery] string? role = null,
+			[FromQuery] string? searchTerm = null,
 			[FromQuery] int page = 1,
 			[FromQuery] int pageSize = 10)
 		{
@@ -520,6 +535,16 @@ namespace LoopLearn.API.Controllers
 					? await _userManager.GetUsersInRoleAsync(role)
 					: await _userManager.Users.ToListAsync();
 
+				if (!string.IsNullOrEmpty(searchTerm))
+				{
+					searchTerm = searchTerm.Trim().ToUpper();
+					users = users.Where(u =>
+						u.NormalizedUserName.Contains(searchTerm) ||
+						u.NormalizedEmail.Contains(searchTerm) ||
+						u.FullName.ToUpper().Contains(searchTerm))
+						.ToList();
+				}
+
 				if (!users.Any())
 					return NotFound(new
 					{
@@ -529,11 +554,16 @@ namespace LoopLearn.API.Controllers
 
 				var totalCount = users.Count();
 
-				var userDTOs = new List<AdminUserDTO>();
-				foreach (var user in users)
+				var pagedUsers = users
+					.Skip((page - 1) * pageSize)
+					.Take(pageSize)
+					.ToList();
+
+				var PagedUserdDTOs = new List<AdminUserDTO>();
+				foreach (var user in pagedUsers)
 				{
 					var roles = await _userManager.GetRolesAsync(user);
-					userDTOs.Add(new AdminUserDTO
+					PagedUserdDTOs.Add(new AdminUserDTO
 					{
 						Id = user.Id,
 						FullName = user.FullName,
@@ -546,18 +576,13 @@ namespace LoopLearn.API.Controllers
 					});
 				}
 
-				var pagedUserDTOs = userDTOs
-					.Skip((page - 1) * pageSize)
-					.Take(pageSize)
-					.ToList();
-
 				// Header metadata
 				Response.Headers.Append("Total-Count", totalCount.ToString());
 				Response.Headers.Append("Page-Number", page.ToString());
 				Response.Headers.Append("Page-Size", pageSize.ToString());
 				Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page-Number, Page-Size");
 
-				return Ok(new { success = true, data = pagedUserDTOs });
+				return Ok(new { success = true, data = PagedUserdDTOs });
 			}
 			catch (UnauthorizedAccessException)
 			{
@@ -754,11 +779,11 @@ namespace LoopLearn.API.Controllers
 
 				var adminUser = await _userManager.FindByIdAsync(adminId);
 				var adminRoles = await _userManager.GetRolesAsync(adminUser);
-				if (model.NewRole == "Admin" && !adminRoles.Contains("SuperAdmin"))
+				if ((model.NewRole == "Admin" || userRoles.Contains("Admin")) && !adminRoles.Contains("SuperAdmin"))
 					return BadRequest(new
 					{
 						success = false,
-						message = "Only SuperAdmin Can assign Admin role."
+						message = "Only SuperAdmin Can change Admin role."
 					});
 
 				await using var transaction = await _unitOfWork.BeginTransactionAsync();
@@ -882,10 +907,246 @@ namespace LoopLearn.API.Controllers
 			}
 		}
 
-		// ============================================
-		// 
-		// ============================================
+		// =============================================
+		// PATCH /api/admin/{id}/instructor-application/reject
+		// Rejects an instructor application by user ID.
+		// =============================================
+		[HttpPatch("users/{id}/instructor-applications/reject")]
+		public async Task<IActionResult> RejectInstructorApplication(string id)
+		{
+			try
+			{
+				var user = await _userManager.FindByIdAsync(id);
 
+				if (user is null)
+					return NotFound(new { success = false, message = "User not found." });
+
+				if (!user.IsInstructorRequested)
+					return BadRequest(new { success = false, message = "This user has not applied to be an instructor." });
+
+				user.IsInstructorRequested = false;
+				user.InstructorRequestedAt = null;
+				await _userManager.UpdateAsync(user);
+
+				return Ok(new
+				{
+					success = true,
+					message = $"Instructor application for user '{user.UserName}' has been rejected.",
+					data = new
+					{
+						UserId = user.Id,
+						UserName = user.UserName,
+						Email = user.Email,
+						RejectedAt = DateTime.UtcNow
+					}
+				});
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+		}
+
+		// ============================================
+		// POST /api/admin/categories
+		// Allows admins to create a new category.
+		// ============================================
+		[HttpPost("categories")]
+		public async Task<IActionResult> CreateCategory([FromBody] CreateUpdateCategoryDTO model)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(model.Name))
+					return BadRequest(new
+					{
+						success = false,
+						message = "Category name is required."
+					});
+
+				var existingCategory = await _unitOfWork.Categories
+					.GetFirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower());
+
+				if (existingCategory != null)
+					return Conflict(new
+					{
+						success = false,
+						message = "A category with this name already exists."
+					});
+
+				var newCategory = new Category
+				{
+					Name = model.Name,
+					Description = model.Description
+				};
+
+				await _unitOfWork.Categories.AddAsync(newCategory);
+				await _unitOfWork.SaveAsync();
+
+				return Ok(new
+				{
+					success = true,
+					message = "Category created successfully.",
+					data = newCategory
+				});
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+
+		}
+
+		// ============================================
+		// PATCH /api/admin/categories/{id}
+		// Allows admins to update an existing category by ID.
+		// ============================================
+		[HttpPatch("categories/{id:int}")]
+		public async Task<IActionResult> UpdateCategory(int id, [FromBody] CreateUpdateCategoryDTO model)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(model.Name) && string.IsNullOrEmpty(model.Description))
+					return BadRequest(new
+					{
+						success = false,
+						message = "At least one field (Name or Description) must be provided for update."
+					});
+
+				var category = await _unitOfWork.Categories.GetFirstOrDefaultAsync(c => c.Id == id);
+
+				if (category == null)
+					return NotFound(new { success = false, message = "Category not found." });
+
+
+				if (category.Name == model.Name && category.Description == model.Description)
+					return BadRequest(new { success = false, message = "No changes detected." });
+
+				if (!string.IsNullOrWhiteSpace(model.Name))
+				{
+					var existingCategory = await _unitOfWork.Categories
+						.GetFirstOrDefaultAsync(c => c.Name.ToLower() == model.Name.ToLower() && c.Id != id);
+
+					if (existingCategory != null)
+						return Conflict(new
+						{
+							success = false,
+							message = "A category with this name already exists."
+						});
+					category.Name = model.Name;
+				}
+				if (model.Description is not null)
+					category.Description = model.Description;
+				
+				_unitOfWork.Categories.Update(category);
+				await _unitOfWork.SaveAsync();
+
+				return Ok(new
+				{
+					success = true,
+					message = "Category updated successfully.",
+					data = category
+				});
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+
+		}
+
+		// ============================================
+		// POST /api/admin/tags
+		// Allows admins to create a new tag.
+		// ============================================
+		[HttpPost("tags")]
+		public async Task<IActionResult> CreateTag([FromBody] CreateUpdateTagDTO model)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(model.Name))
+					return BadRequest(new
+					{
+						success = false,
+						message = "Tag name is required."
+					});
+
+				var existingTag = await _unitOfWork.Tags
+					.GetFirstOrDefaultAsync(t => t.Name.ToLower() == model.Name.ToLower());
+
+				if (existingTag != null)
+					return Conflict(new
+					{
+						success = false,
+						message = "A tag with this name already exists."
+					});
+
+				var newTag = new Tag { Name = model.Name };
+
+				await _unitOfWork.Tags.AddAsync(newTag);
+				await _unitOfWork.SaveAsync();
+
+				return Ok(new
+				{
+					success = true,
+					message = "Tag created successfully.",
+					data = newTag
+				});
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+		}
+
+		// ============================================
+		// PATCH /api/admin/tags/{id}
+		// Allows admins to update an existing tag by ID.
+		// ============================================
+		[HttpPatch("tags/{id:int}")]
+		public async Task<IActionResult> UpdateTag(int id, [FromBody] CreateUpdateTagDTO model)
+		{
+			try
+			{
+				if (string.IsNullOrWhiteSpace(model.Name))
+					return BadRequest(new
+					{
+						success = false,
+						message = "Tag name is required."
+					});
+				
+				var tag = await _unitOfWork.Tags.GetFirstOrDefaultAsync(t => t.Id == id);
+				if (tag == null)
+					return NotFound(new { success = false, message = "Tag not found." });
+				
+				if (tag.Name == model.Name)
+					return BadRequest(new { success = false, message = "No changes detected." });
+				
+				var existingTag = await _unitOfWork.Tags
+					.GetFirstOrDefaultAsync(t => t.Name.ToLower() == model.Name.ToLower() && t.Id != id);
+				
+				if (existingTag != null)
+					return Conflict(new
+					{
+						success = false,
+						message = "A tag with this name already exists."
+					});
+				
+				tag.Name = model.Name;
+				_unitOfWork.Tags.Update(tag);
+				await _unitOfWork.SaveAsync();
+				
+				return Ok(new
+				{
+					success = true,
+					message = "Tag updated successfully.",
+					data = tag
+				});
+			}
+			catch (Exception e)
+			{
+				return StatusCode(500, new { success = false, message = e.Message });
+			}
+		}
 
 
 	}
