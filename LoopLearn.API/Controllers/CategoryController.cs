@@ -14,11 +14,20 @@ namespace LoopLearn.API.Controllers
             _unitOfWork = unitOfWork;
         }
         [HttpGet]
-        public async Task<IActionResult> GetCategories()
+        public async Task<IActionResult> GetCategories([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                var categories = await _unitOfWork.Categories.GetAsync(selector: c => new
+                if (page < 1 || pageSize < 1)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Page and pageSize must be greater than zero."
+                    });
+				}
+
+				var categories = await _unitOfWork.Categories.GetAsync(selector: c => new
                 {
                     Id = c.Id,
                     Name = c.Name,
@@ -32,10 +41,20 @@ namespace LoopLearn.API.Controllers
                         message = "No Categories Found."
                     });
 
-                return Ok(new
+                var totalCategories = categories.Count();
+
+                var pagedCategories = categories.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+				// Header metadata
+                Response.Headers.Append("Total-Count", totalCategories.ToString());
+                Response.Headers.Append("Page-Number", page.ToString());
+                Response.Headers.Append("Page-Size", pageSize.ToString());
+                Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page-Number, Page-Size");
+
+				return Ok(new
                 {
                     success = true,
-                    data = categories
+                    data = pagedCategories
                 });
             }
             catch (Exception)
