@@ -810,6 +810,13 @@ namespace LoopLearn.API.Controllers
 						});
 					}
 
+					if (user.IsInstructorRequested && model.NewRole == "Instructor")
+					{
+						user.IsInstructorRequested = false;
+						user.InstructorRequestedAt = null;
+						await _userManager.UpdateAsync(user);
+					}
+
 					await transaction.CommitAsync();
 				}
 				catch
