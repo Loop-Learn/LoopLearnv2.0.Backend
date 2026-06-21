@@ -30,8 +30,10 @@ namespace LoopLearn.Entities.DTOs.Course
         public string InstructorId { get; set; }
 
         public string InstructorName { get; set; }
+        public string InstructorProfileImageUrl { get; set; }
+        public string InstructorBio { get; set; }
 
-        public string CategoryName { get; set; }
+		public string CategoryName { get; set; }
 
         public decimal AverageRating { get; set; }
 

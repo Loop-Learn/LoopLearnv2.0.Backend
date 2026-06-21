@@ -380,6 +380,8 @@ namespace LoopLearn.API.Controllers
 				UpdatedAt = course.UpdatedAt,
 				InstructorId = course.InstructorId,
 				InstructorName = course.Instructor != null ? $"{course.Instructor.FullName}" : "Unknown",
+				InstructorProfileImageUrl = course.Instructor?.ProfileImageUrl ?? "",
+				InstructorBio = course.Instructor?.Bio ?? "",
 				CategoryName = course.Category?.Name,
 				AverageRating = (decimal)(course.Feedbacks?.Any() == true ? course.Feedbacks.Average(f => f.Rating) : 0),
 				TotalRatings = course.Feedbacks?.Count ?? 0,
