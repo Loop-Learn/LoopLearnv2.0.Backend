@@ -13,6 +13,6 @@ namespace LoopLearn.Entities.DTOs.Users
         public string? Email { get; set; }
         [RegularExpression(@"^01[0125]\d{8}$", ErrorMessage = "Phone Number is not Valid. Please make sure its an EGY phone Number.")]
         public string? Phone { get; set; }
-
-    }
+		public string Bio { get; set; }
+	}
 }

@@ -122,6 +122,13 @@ namespace LoopLearn.API.Controllers
 					user.LastName = model.LastName;
 					hasChaged = true;
 				}
+
+				if (!string.IsNullOrEmpty(model.Bio))
+				{
+					user.Bio = model.Bio;
+					hasChaged = true;
+				}
+
 				if (!hasChaged)
 				{
 					return BadRequest(new
@@ -332,6 +339,7 @@ namespace LoopLearn.API.Controllers
 			Email = user.Email,
 			IsVerifiedEmail = user.EmailConfirmed,
 			Phone = user.PhoneNumber,
+			Bio = user.Bio,
 			IsVerifiedPhone = user.PhoneNumberConfirmed,
 			Gender = user.Gender,
 			JoinDate = user.CreatedAt,

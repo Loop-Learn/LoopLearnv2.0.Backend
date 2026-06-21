@@ -810,11 +810,18 @@ namespace LoopLearn.API.Controllers
 						});
 					}
 
-					if (user.IsInstructorRequested && model.NewRole == "Instructor")
+					user.IsInstructorRequested = false;
+					user.InstructorRequestedAt = null;
+
+					var updateResult = await _userManager.UpdateAsync(user);
+					if (!updateResult.Succeeded)
 					{
-						user.IsInstructorRequested = false;
-						user.InstructorRequestedAt = null;
-						await _userManager.UpdateAsync(user);
+						await transaction.RollbackAsync();
+						return StatusCode(500, new
+						{
+							success = false,
+							message = string.Join(", ", updateResult.Errors.Select(e => e.Description))
+						});
 					}
 
 					await transaction.CommitAsync();
@@ -1043,7 +1050,7 @@ namespace LoopLearn.API.Controllers
 				}
 				if (model.Description is not null)
 					category.Description = model.Description;
-				
+
 				_unitOfWork.Categories.Update(category);
 				await _unitOfWork.SaveAsync();
 
@@ -1120,28 +1127,28 @@ namespace LoopLearn.API.Controllers
 						success = false,
 						message = "Tag name is required."
 					});
-				
+
 				var tag = await _unitOfWork.Tags.GetFirstOrDefaultAsync(t => t.Id == id);
 				if (tag == null)
 					return NotFound(new { success = false, message = "Tag not found." });
-				
+
 				if (tag.Name == model.Name)
 					return BadRequest(new { success = false, message = "No changes detected." });
-				
+
 				var existingTag = await _unitOfWork.Tags
 					.GetFirstOrDefaultAsync(t => t.Name.ToLower() == model.Name.ToLower() && t.Id != id);
-				
+
 				if (existingTag != null)
 					return Conflict(new
 					{
 						success = false,
 						message = "A tag with this name already exists."
 					});
-				
+
 				tag.Name = model.Name;
 				_unitOfWork.Tags.Update(tag);
 				await _unitOfWork.SaveAsync();
-				
+
 				return Ok(new
 				{
 					success = true,

@@ -9,7 +9,8 @@ namespace LoopLearn.Entities.DTOs.Users
         public string LastName { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }
-        public DateTime BirthDate { get; set; }
+		public string Bio { get; set; }
+		public DateTime BirthDate { get; set; }
         public Gender Gender { get; set; }
         public bool IsVerifiedEmail { get; set; }
         public bool IsVerifiedPhone { get; set; }
