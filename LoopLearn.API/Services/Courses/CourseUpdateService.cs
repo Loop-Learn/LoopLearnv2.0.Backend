@@ -232,7 +232,6 @@ namespace LoopLearn.API.Services.Courses
                     IsPreview = dto.IsPreview,
                     Duration = duration ?? (dto.Duration ?? TimeSpan.Zero),
                     Section = section,
-                    QuizId = null
                 });
             }
         }

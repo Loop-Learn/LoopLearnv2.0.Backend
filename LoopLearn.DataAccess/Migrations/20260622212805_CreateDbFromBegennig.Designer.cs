@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LoopLearn.DataAccess.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260617125320_AddNewFeatureToApplicationUser_IsInstructor")]
-    partial class AddNewFeatureToApplicationUser_IsInstructor
+    [Migration("20260622212805_CreateDbFromBegennig")]
+    partial class CreateDbFromBegennig
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -59,6 +59,9 @@ namespace LoopLearn.DataAccess.Migrations
 
                     b.Property<int>("Gender")
                         .HasColumnType("int");
+
+                    b.Property<DateTime?>("InstructorRequestedAt")
+                        .HasColumnType("datetime2");
 
                     b.Property<bool>("IsInstructorRequested")
                         .HasColumnType("bit");
@@ -426,9 +429,6 @@ namespace LoopLearn.DataAccess.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<int?>("QuizId")
-                        .HasColumnType("int");
-
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
@@ -441,8 +441,6 @@ namespace LoopLearn.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("QuizId");
 
                     b.HasIndex("SectionId");
 
@@ -1040,17 +1038,11 @@ namespace LoopLearn.DataAccess.Migrations
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Lesson", b =>
                 {
-                    b.HasOne("LoopLearn.Entities.Models.Quiz", "Quiz")
-                        .WithMany()
-                        .HasForeignKey("QuizId");
-
                     b.HasOne("LoopLearn.Entities.Models.Section", "Section")
                         .WithMany("Lessons")
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Quiz");
 
                     b.Navigation("Section");
                 });

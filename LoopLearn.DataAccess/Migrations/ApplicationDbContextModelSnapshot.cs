@@ -426,9 +426,6 @@ namespace LoopLearn.DataAccess.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("int");
 
-                    b.Property<int?>("QuizId")
-                        .HasColumnType("int");
-
                     b.Property<int>("SectionId")
                         .HasColumnType("int");
 
@@ -441,8 +438,6 @@ namespace LoopLearn.DataAccess.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("QuizId");
 
                     b.HasIndex("SectionId");
 
@@ -1040,17 +1035,11 @@ namespace LoopLearn.DataAccess.Migrations
 
             modelBuilder.Entity("LoopLearn.Entities.Models.Lesson", b =>
                 {
-                    b.HasOne("LoopLearn.Entities.Models.Quiz", "Quiz")
-                        .WithMany()
-                        .HasForeignKey("QuizId");
-
                     b.HasOne("LoopLearn.Entities.Models.Section", "Section")
                         .WithMany("Lessons")
                         .HasForeignKey("SectionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Quiz");
 
                     b.Navigation("Section");
                 });
