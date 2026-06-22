@@ -2,7 +2,7 @@ using LoopLearn.API.Services;
 using LoopLearn.API.Services.Auth;
 using LoopLearn.API.Services.Courses;
 using LoopLearn.API.Services.Enroll;
-using LoopLearn.API.Services.Shared;
+using LoopLearn.API.Services.Utils;
 using LoopLearn.DataAccess.Data;
 using LoopLearn.DataAccess.Implementation;
 using LoopLearn.Entities.Helpers.Models;
@@ -39,10 +39,11 @@ namespace LoopLearn.API
             builder.Services.AddScoped<CourseValidationService, CourseValidationService>();
             builder.Services.AddScoped<CourseMappingService, CourseMappingService>();
             builder.Services.AddScoped<ImageService,ImageService>();
+            builder.Services.AddScoped<YoutubeService, YoutubeService>();
 
 
-			// ── Identity ──────────────────────────────────────────────────────
-			builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+            // ── Identity ──────────────────────────────────────────────────────
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
                 options.Password.RequiredLength = 8;
                 options.Password.RequireDigit = true;
@@ -57,9 +58,12 @@ namespace LoopLearn.API
             // ── Configuration ─────────────────────────────────────────────────
             var jwtSettings = builder.Configuration.GetSection("Jwt");
             var stripeSettings = builder.Configuration.GetSection("Stripe");
+            var youtubeToken = builder.Configuration.GetSection("youtube");
 
             builder.Services.Configure<Jwt>(jwtSettings);
             builder.Services.Configure<StripeSettings>(stripeSettings);
+            builder.Services.Configure<Youtube>(youtubeToken);
+
 
             // Set Stripe API key once at startup — not on every controller instantiation
             StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];

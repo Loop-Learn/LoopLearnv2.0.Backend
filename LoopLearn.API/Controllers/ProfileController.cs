@@ -1,4 +1,4 @@
-﻿using LoopLearn.API.Services.Shared;
+﻿using LoopLearn.API.Services.Utils;
 using LoopLearn.Entities.DTOs.Users;
 using LoopLearn.Entities.Helpers.CustomValidations;
 using LoopLearn.Entities.Interfaces;

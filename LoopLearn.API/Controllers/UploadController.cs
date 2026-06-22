@@ -1,4 +1,4 @@
-﻿using LoopLearn.API.Services.Shared;
+﻿using LoopLearn.API.Services.Utils;
 using LoopLearn.Entities.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

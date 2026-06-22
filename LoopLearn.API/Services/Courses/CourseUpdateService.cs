@@ -1,8 +1,9 @@
-﻿using LoopLearn.API.Services.Shared;
+﻿using LoopLearn.API.Services.Utils;
 using LoopLearn.Entities.DTOs.Course;
 using LoopLearn.Entities.Enums;
 using LoopLearn.Entities.Interfaces;
 using LoopLearn.Entities.Models;
+using System.Threading.Tasks;
 
 namespace LoopLearn.API.Services.Courses
 {
@@ -10,10 +11,12 @@ namespace LoopLearn.API.Services.Courses
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly ImageService _imageService;
-        public CourseUpdateService(IUnitOfWork unitOfWork, ImageService imageService)
+        private readonly YoutubeService _youtubeService;
+        public CourseUpdateService(IUnitOfWork unitOfWork, ImageService imageService, YoutubeService youtubeService)
         {
             _unitOfWork = unitOfWork;
             _imageService = imageService;
+            _youtubeService = youtubeService;
         }
 
         public async Task UpdateCourseDataAsync(Course course, UpdateCourseDTO model)
@@ -191,7 +194,7 @@ namespace LoopLearn.API.Services.Courses
             foreach (var item in items)
             {
                 if (item.Type == SectionItemType.Lesson && item.Lesson is not null)
-                    ProcessLesson(section, item.Lesson, existingDbLessonIds);
+                   await ProcessLesson(section, item.Lesson, existingDbLessonIds);
                 else if (item.Type == SectionItemType.Quiz && item.Quiz is not null)
                     ProcessQuiz(section, item.Quiz, existingDbQuizIds);
             }
@@ -200,15 +203,21 @@ namespace LoopLearn.API.Services.Courses
         // ─────────────────────────────────────────────────
         // Lessons & Quizzes
         // ─────────────────────────────────────────────────
-        private void ProcessLesson(Section section, LessonCreationDTO dto, HashSet<int> existingDbIds)
+        private async Task ProcessLesson(Section section, LessonCreationDTO dto, HashSet<int> existingDbIds)
         {
+            var duration = await _youtubeService.GetYouTubeVideoDurationAsync(dto.VideoUrl ?? "");
             if (dto.Id.HasValue && existingDbIds.Contains(dto.Id.Value))
             {
                 var existing = section.Lessons.First(l => l.Id == dto.Id!.Value);
                 if (dto.Title is not null) existing.Title = dto.Title;
                 if (dto.Description is not null) existing.Description = dto.Description;
-                if (dto.VideoUrl is not null) existing.VideoUrl = dto.VideoUrl;
-                if (dto.Duration is not null) existing.Duration = dto.Duration.Value;
+                if (dto.VideoUrl is not null)
+                {
+                    existing.VideoUrl = dto.VideoUrl;
+                    if (duration is not null) existing.Duration = (TimeSpan) duration;
+                    else if (dto.Duration is not null) existing.Duration = dto.Duration.Value;
+                    else existing.Duration = TimeSpan.Zero;
+                }
                 existing.Order = dto.Order;
                 existing.IsPreview = dto.IsPreview;
             }
@@ -221,7 +230,7 @@ namespace LoopLearn.API.Services.Courses
                     VideoUrl = dto.VideoUrl ?? "",
                     Order = dto.Order,
                     IsPreview = dto.IsPreview,
-                    Duration = dto.Duration ?? TimeSpan.Zero,
+                    Duration = duration ?? (dto.Duration ?? TimeSpan.Zero),
                     Section = section,
                     QuizId = null
                 });

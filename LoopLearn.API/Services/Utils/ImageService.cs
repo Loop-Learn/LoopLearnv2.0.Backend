@@ -1,4 +1,4 @@
-﻿namespace LoopLearn.API.Services.Shared
+﻿namespace LoopLearn.API.Services.Utils
 {
     public class ImageService
     {
