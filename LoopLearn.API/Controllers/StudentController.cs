@@ -198,23 +198,25 @@ namespace LoopLearn.API.Controllers
                 }
                 else
                 {
-                    // If marking complete, set to full values
                     if (isCompleted)
                     {
                         progress.IsCompleted = true;
                         progress.CompletedAt = DateTime.UtcNow;
-                        progress.LastSecondWatched = dto.TotalSeconds;   // force full duration
+                        progress.LastSecondWatched = dto.TotalSeconds;
                         progress.WatchedPercentage = 100;
                     }
                     else
                     {
-                        // Only update if new second is higher
                         if (dto.LastSecondWatched > progress.LastSecondWatched)
                             progress.LastSecondWatched = dto.LastSecondWatched;
                         progress.WatchedPercentage = Math.Max(progress.WatchedPercentage, watchedPercent);
                     }
                     _unitOfWork.LessonProgresses.Update(progress);
                 }
+                await _unitOfWork.SaveAsync();
+
+                // Refresh enrollment from DB after saving progress
+                enrollment = await _enrollment.ValidateEnrollmentAsync(UserId, lesson.Section.CourseId);
 
                 var (newProgress, justCompleted) = await RecalculateCourseProgressAsync(UserId, lesson.Section.CourseId, enrollment);
                 enrollment.ProgressPercentage = newProgress;
@@ -463,7 +465,6 @@ namespace LoopLearn.API.Controllers
                 if (enrollment == null)
                     return Unauthorized(new { success = false, message = "Not enrolled." });
 
-                // Overwrite previous attempt
                 var oldAttempt = await _unitOfWork.QuizAttempts.GetFirstOrDefaultAsync(a => a.StudentId == UserId && a.QuizId == quizId);
                 if (oldAttempt != null)
                 {
@@ -473,7 +474,6 @@ namespace LoopLearn.API.Controllers
                     await _unitOfWork.SaveAsync();
                 }
 
-                // Grade answers
                 var questionMap = quiz.Questions.ToDictionary(q => q.Id);
                 int earnedPoints = 0;
                 int totalPoints = quiz.Questions.Sum(q => q.Points);
@@ -526,7 +526,9 @@ namespace LoopLearn.API.Controllers
                 await _unitOfWork.QuizAttempts.AddAsync(attempt);
                 await _unitOfWork.SaveAsync();
 
-                // Update course progress after quiz
+                // Refresh enrollment from DB after saving quiz attempt
+                enrollment = await _enrollment.ValidateEnrollmentAsync(UserId, courseId);
+
                 var (newProgress, justCompleted) = await RecalculateCourseProgressAsync(UserId, courseId, enrollment);
                 enrollment.ProgressPercentage = newProgress;
                 if (justCompleted)
@@ -593,11 +595,11 @@ namespace LoopLearn.API.Controllers
                         success = false,
                         message = "You already have a pending request. Please wait for it to be reviewed."
                     });
- 
+
                 user.IsInstructorRequested = true;
                 user.InstructorRequestedAt = DateTime.UtcNow;
-				await _userManager.UpdateAsync(user);
- 
+                await _userManager.UpdateAsync(user);
+
                 return Ok(new
                 {
                     success = true,
@@ -613,29 +615,31 @@ namespace LoopLearn.API.Controllers
                 return StatusCode(500, new { success = false, message = e.Message });
             }
         }
-        
+
         #region Helper Methods
         private async Task<(double percentage, bool justCompleted)> RecalculateCourseProgressAsync(string studentId, int courseId, Enrollment enrollment)
         {
             var allLessons = await _unitOfWork.Lessons.GetAsync(l => l.Section.CourseId == courseId, selector: l => l.Id);
-            
+
             var completedLessons = (await _unitOfWork.LessonProgresses.GetAllAsync(p =>
                 p.StudentId == studentId && allLessons.Contains(p.LessonId) && p.IsCompleted)).Count();
 
             var allQuizzes = await _unitOfWork.Quizzes.GetAsync(q =>
                 (q.CourseId == courseId || q.Section.CourseId == courseId), selector: q => q.Id);
-            
+
             var passedQuizzes = (await _unitOfWork.QuizAttempts.GetAllAsync(a =>
                 a.StudentId == studentId && allQuizzes.Contains(a.QuizId) && a.IsPassed)).Count();
 
-            int totalItems = allLessons.Count() + allQuizzes.Count();
-           
+            int totalLessons = allLessons.Count();
+            int totalQuizzes = allQuizzes.Count();
+            int totalItems = totalLessons + totalQuizzes;
+
             if (totalItems == 0) return (0, false);
-           
+
             int completedItems = completedLessons + passedQuizzes;
             double percentage = Math.Round((double)completedItems / totalItems * 100, 2);
-            bool justCompleted = !enrollment.IsCompleted && percentage >= 100;
-           
+            bool justCompleted = !enrollment.IsCompleted && completedItems == totalItems && totalItems > 0;
+
             return (percentage, justCompleted);
         }
 
