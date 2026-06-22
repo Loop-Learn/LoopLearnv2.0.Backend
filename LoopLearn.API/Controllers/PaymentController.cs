@@ -51,7 +51,10 @@ namespace LoopLearn.API.Controllers
                 if (course is null || course.IsDeleted)
                     return NotFound(new { success = false, message = "Course not found." });
 
-                if (course.Status != CourseStatus.Published)
+                if (course.InstructorId == studentId)
+                    return BadRequest(new { success = false, message = "Instructors cannot enroll in their own courses." });
+
+				if (course.Status != CourseStatus.Published)
                     return BadRequest(new { success = false, message = "Course is not available." });
 
                 if (course.IsFree)
