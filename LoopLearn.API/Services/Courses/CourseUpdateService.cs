@@ -149,7 +149,7 @@ namespace LoopLearn.API.Services.Courses
                     };
 
                     if (sectionDto.Items is not null)
-                        AddItemsToSection(newSection, sectionDto.Items);
+                        await AddItemsToSectionAsync(newSection, sectionDto.Items);
 
                     course.Sections.Add(newSection);
                 }
@@ -321,13 +321,13 @@ namespace LoopLearn.API.Services.Courses
             question.Options = BuildOptions(dtos);
         }
 
-        private void AddItemsToSection(Section section, List<SectionItemCreationDTO> items)
+        private async Task AddItemsToSectionAsync(Section section, List<SectionItemCreationDTO> items)
         {
             var emptyIds = new HashSet<int>();
             foreach (var item in items)
             {
                 if (item.Type == SectionItemType.Lesson && item.Lesson is not null)
-                    ProcessLesson(section, item.Lesson, emptyIds);
+                   await ProcessLesson(section, item.Lesson, emptyIds);
                 else if (item.Type == SectionItemType.Quiz && item.Quiz is not null)
                     ProcessQuiz(section, item.Quiz, emptyIds);
             }

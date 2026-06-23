@@ -12,6 +12,7 @@ namespace LoopLearn.Entities.DTOs.Course
 		public bool IsFree { get; set; }
 		public string Status { get; set; }
 		public string Level { get; set; }
+		public string Category { get; set; }
         public DateTime CreatedAt { get; set; }
 		public DateTime UpdatedAt { get; set; }
 		public int EnrollmentCount { get; set; }

@@ -151,6 +151,7 @@ namespace LoopLearn.API.Controllers
 						IsFree = c.IsFree,
 						Status = c.Status.ToString(),
 						Level = c.Level.ToString(),
+						Category = c.Category.Name,
 						CreatedAt = c.CreatedAt,
 						UpdatedAt = c.UpdatedAt,
 						EnrollmentCount = c.Enrollments != null ? c.Enrollments.Count : 0,
@@ -158,7 +159,7 @@ namespace LoopLearn.API.Controllers
 										? Math.Round(c.Feedbacks.Average(f => (double)f.Rating), 1)
 										: 0.0
 					},
-					includes: "Enrollments,Feedbacks",
+					includes: "Enrollments,Feedbacks,Category",
 					orderBy: q => q.OrderByDescending(c => c.CreatedAt)
 				);
 
@@ -236,7 +237,7 @@ namespace LoopLearn.API.Controllers
                 }
                 var instructorId = GetUserId();
                 var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(c => c.Id == courseId && c.InstructorId == instructorId,
-                             "Category,Instructor,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
+                             "Category,Instructor,Sections,CourseTags,CourseTags.Tag,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
 
                 if (course is null)
                 {
@@ -656,7 +657,6 @@ namespace LoopLearn.API.Controllers
                 return StatusCode(500, new { success = false, message = e.Message });
             }
         }
-
 
     }
 }

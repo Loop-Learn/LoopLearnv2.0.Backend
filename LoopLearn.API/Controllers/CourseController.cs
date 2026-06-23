@@ -235,7 +235,7 @@ namespace LoopLearn.API.Controllers
 
 				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
 										predicate: c => c.Id == courseId && c.Status == CourseStatus.Published,
-							 includes: "Instructor,Category,Feedbacks,Enrollments,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
+							 includes: "Instructor,Category,Feedbacks,Enrollments,Sections,CourseTags,CourseTags.Tag,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
 
 				if (course is null)
 				{

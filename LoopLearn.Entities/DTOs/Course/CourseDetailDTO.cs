@@ -77,11 +77,17 @@ namespace LoopLearn.Entities.DTOs.Course
 
         public string Category { get; set; }
 
-        public List<string> Tags { get; set; } = new();
+        public List<TagsDTO> Tags { get; set; } = new();
         public List<string> Requirements { get; set; } = new();
         public List<string> LearningOutcomes { get; set; } = new();
         public List<SectionCreationDTO> Sections { get; set; } = new();
         public List<string>? TargetAudiences { get; set; }
+    }
+
+    public class TagsDTO
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
     }
 }
 

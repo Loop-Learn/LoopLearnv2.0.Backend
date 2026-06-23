@@ -24,7 +24,7 @@ namespace LoopLearn.API.Services
 				CreatedAt = course.CreatedAt,
 				UpdatedAt = course.UpdatedAt,
 				Category = course.Category?.Name,
-				Tags = course.CourseTags?.Select(ct => ct.Tag?.Name).Where(t => t != null).ToList() ?? new(),
+				Tags = course.CourseTags?.Select(ct => new TagsDTO { Id = ct.Tag.Id , Name = ct.Tag.Name }).Where(t => t != null).ToList() ?? new List<TagsDTO>(),
 				Requirements = course.Requirements?.Select(r => r.Description).ToList() ?? new(),
 				LearningOutcomes = course.LearningOutcomes?.Select(lo => lo.Description).ToList() ?? new(),
 				Sections = MapToSectionDetailDTOs(course.Sections)

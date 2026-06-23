@@ -363,7 +363,7 @@ namespace LoopLearn.API.Controllers
 
 				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
 							predicate: c => c.Id == courseId,
-							includes: "Category,Instructor,Sections,CourseTags,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
+							includes: "Category,Instructor,Sections,CourseTags,CourseTags.Tag,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes,Sections.Quizzes.Questions,Sections.Quizzes.Questions.Options");
 
 				if (course == null)
 					return NotFound(new
