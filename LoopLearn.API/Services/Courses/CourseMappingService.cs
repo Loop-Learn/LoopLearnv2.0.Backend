@@ -21,6 +21,7 @@ namespace LoopLearn.API.Services
 				IsFree = course.IsFree,
 				Level = course.Level.ToString(),
 				Language = course.Language,
+				Status = course.Status.ToString(),
 				CreatedAt = course.CreatedAt,
 				UpdatedAt = course.UpdatedAt,
 				Category = course.Category?.Name,

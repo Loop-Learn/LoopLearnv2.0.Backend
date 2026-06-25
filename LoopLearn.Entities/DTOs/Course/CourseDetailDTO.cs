@@ -64,6 +64,7 @@ namespace LoopLearn.Entities.DTOs.Course
         public string ThumbnailUrl { get; set; }
 
         public decimal Price { get; set; }
+        public string Status { get; set; }
 
         public bool IsFree { get; set; }
 
