@@ -235,7 +235,7 @@ namespace LoopLearn.API.Controllers
 
 				var course = await _unitOfWork.Courses.GetFirstOrDefaultAsync(
 										predicate: c => c.Id == courseId && c.Status == CourseStatus.Published,
-							 includes: "Instructor,Category,Feedbacks,Enrollments,Sections,CourseTags,CourseTags.Tag,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
+							 includes: "Instructor,Category,Feedbacks,Feedbacks.Student,Enrollments,Sections,CourseTags,CourseTags.Tag,Requirements,LearningOutcomes,Sections.Lessons,Sections.Quizzes");
 
 				if (course is null)
 				{
@@ -267,8 +267,13 @@ namespace LoopLearn.API.Controllers
             try
             {
                 var feedback = await _unitOfWork.Feedbacks.GetAllAsync(f => f.CourseId == courseId,includes:"Student");
-                if (feedback == null) return Ok(new { success = true, data = (FeedbacksDTO?)null });
-				var hasPrevRate = await _unitOfWork.Feedbacks.ExistsAsync(f => f.StudentId == UserId);
+                if (feedback == null || !feedback.Any()) return NoContent();
+
+				bool hasPrevRate = false;
+
+                if (User.Identity.IsAuthenticated)
+					hasPrevRate = await _unitOfWork.Feedbacks.ExistsAsync(f => f.StudentId == UserId);
+
 				return Ok(new
 				{
 					success = true,
@@ -451,7 +456,7 @@ namespace LoopLearn.API.Controllers
 			}).OrderBy(f => f.PostedAt).ThenBy(f => f.Rating).ToList();
 		}
         private string UserId => User.FindFirstValue(ClaimTypes.NameIdentifier)
-            ?? throw new UnauthorizedAccessException("Invalid token.");
+                        ?? throw new UnauthorizedAccessException("Invalid token.");
         #endregion
 
     }
