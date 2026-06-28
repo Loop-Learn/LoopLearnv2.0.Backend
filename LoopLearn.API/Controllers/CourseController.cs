@@ -168,12 +168,12 @@ namespace LoopLearn.API.Controllers
 											.Distinct();
 
 				var coursesCardDTOs = await _unitOfWork.Courses.GetAsync(
-					predicate: c => searchWords.Any(word =>
+					predicate: c => c.Status == CourseStatus.Published && 
+								searchWords.Any(word =>
 								c.Title.ToLower().Contains(word) ||
 								c.Subtitle.ToLower().Contains(word) ||
 								c.CourseTags.Any(ct => ct.Tag != null && ct.Tag.Name.ToLower().Contains(word))
-								&& c.Status == CourseStatus.Published
-					),
+								),
 					selector: MapToCourseCardDTO,
 					includes: "Instructor,Feedbacks,CourseTags");
 
