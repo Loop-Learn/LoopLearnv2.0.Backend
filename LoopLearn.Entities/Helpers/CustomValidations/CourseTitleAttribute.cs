@@ -7,7 +7,7 @@ namespace LoopLearn.Entities.Helpers.CustomValidations
     {
         private const int MinLength = 2;
         private const int MaxLength = 60;
-        private const string RegexPattern = @"^[a-zA-Z0-9\s\-_,\.:;()&]+$";
+        private const string RegexPattern = @"^[a-zA-Z0-9\s-_,\/.:;()&+*^%$#@!~–]+$";
 
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
@@ -26,7 +26,7 @@ namespace LoopLearn.Entities.Helpers.CustomValidations
             if (!Regex.IsMatch(title, RegexPattern))
             {
                 return new ValidationResult(
-                    "Title can only contain English letters, numbers, spaces, and: - _ , . : ; ( ) &"
+                    "Title can only contain English letters, numbers, spaces, and : - _ , \\ / . : ; ( ) & + * ^ % $ # @ ! ~"
                 );
             }
 

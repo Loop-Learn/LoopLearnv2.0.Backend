@@ -43,11 +43,14 @@ namespace LoopLearn.API.Controllers
 		// (oldest first — review in the order they came in).
 		// =============================================
 		[HttpGet("courses/pending")]
-		public async Task<IActionResult> GetPendingCourses()
+		public async Task<IActionResult> GetPendingCourses([FromQuery] int page = 1,[FromQuery] int pageSize = 10)
 		{
 			try
 			{
-				var pendingCourses = await _unitOfWork.Courses
+                if (page <= 0 || pageSize <= 0)
+                    return BadRequest(new { success = false, message = "Page and Page size must be greater than 0." });
+
+                var pendingCourses = await _unitOfWork.Courses
 					.GetAsync(
 						predicate: c => c.Status == CourseStatus.PendingReview && !c.IsDeleted,
 						selector: c => new PendingCourseDTO
@@ -67,7 +70,22 @@ namespace LoopLearn.API.Controllers
 						orderBy: q => q.OrderBy(c => c.SubmittedForReviewAt)
 					);
 
-				return Ok(new { success = true, data = pendingCourses });
+				if(pendingCourses is null || !pendingCourses.Any())
+				{
+					return NoContent();
+				}
+
+                var pagedCourses = pendingCourses
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                Response.Headers.Append("Total-Count", pendingCourses.Count().ToString());
+                Response.Headers.Append("Page-Number", page.ToString());
+                Response.Headers.Append("Page-Size", pageSize.ToString());
+                Response.Headers.Append("Access-Control-Expose-Headers", "Total-Count, Page-Number, Page-Size");
+
+                return Ok(new { success = true, data = pagedCourses });
 			}
 			catch (UnauthorizedAccessException)
 			{
@@ -569,6 +587,7 @@ namespace LoopLearn.API.Controllers
 						FullName = user.FullName,
 						UserName = user.UserName,
 						Email = user.Email,
+                        ProfileImageUrl = user.ProfileImageUrl ?? "No Image",
 						Role = roles.FirstOrDefault() ?? "No Role",
 						IsLocked = await _userManager.IsLockedOutAsync(user),
 						CreatedAt = user.CreatedAt,
